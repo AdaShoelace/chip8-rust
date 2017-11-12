@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <title>CHIP-8 interpreter</title>    
+        
+        <link rel="stylesheet" href="./style.css" type="text/css">
+        
+        <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+        <script type="text/javascript" src="http://jashkenas.github.com/coffee-script/extras/coffee-script.js"></script>
+        
+        <script type="text/coffeescript" src="./src/roms.coffee"></script>
+        <script type="text/coffeescript" src="./src/hardware.coffee"></script>
+        <script type="text/coffeescript" src="./src/keyboard.coffee"></script>
+        <script type="text/coffeescript" src="./src/debug.coffee"></script>
+        <script type="text/coffeescript" src="./src/draw.coffee"></script>
+    </head>
+    
+    <body>
+    
+        <noscript>CHIP-8 interpreter needs Javascript to live. Enable it and come back!</noscript>
+        
+        <div id="io">
+            
+            <div id="loadroms">
+                <select>
+                    <option disabled>Load ROM:</option>
+                </select>
+            </div>
+        
+            <div id="controls">
+                <input type="submit" id="k_start" value="Start">
+                <input type="submit" id="k_step"  value="Step">
+                <br>
+                <input type="submit" id="k_reset" value="Reset">
+                <input type="submit" id="k_debug" value="Debug">
+            </div><!-- #controls -->
+            
+            <canvas id="scr" width="192" height="96"><!-- 3x zoom -->
+                This version of your browser doesn't support HTML canvas element. Please update it.
+            </canvas>
+            <br>
+            
+            <div id="keyboard">
+                <input type="submit" id="k_1" value="1">
+                <input type="submit" id="k_2" value="2">
+                <input type="submit" id="k_3" value="3">
+                <input type="submit" id="k_C" value="C">
+                <br>
+                <input type="submit" id="k_4" value="4">
+                <input type="submit" id="k_5" value="5">
+                <input type="submit" id="k_6" value="6">
+                <input type="submit" id="k_D" value="D">
+                <br>
+                <input type="submit" id="k_7" value="7">
+                <input type="submit" id="k_8" value="8">
+                <input type="submit" id="k_9" value="9">
+                <input type="submit" id="k_E" value="E">
+                <br>
+                <input type="submit" id="k_A" value="A">
+                <input type="submit" id="k_0" value="0">
+                <input type="submit" id="k_B" value="B">
+                <input type="submit" id="k_F" value="F">
+            </div><!-- #keyboard -->
+            
+        </div><!-- #io -->  
+        
+        <div id="debugwindow">
+            <textarea id="d_ctrls" rows=11 cols=11 readonly></textarea>
+            <textarea id="d_regs"  rows=13 cols=20 readonly></textarea>
+            <textarea id="d_keys"  rows=13 cols=20 readonly></textarea>
+            <textarea id="d_stack" rows=21 cols=8  readonly></textarea>
+        </div>
+        
+    </body>
+    
+</html>

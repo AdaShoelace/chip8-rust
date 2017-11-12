@@ -1,0 +1,55 @@
+#debugwindow
+{
+    display: none;
+}
+
+#debugwindow textarea
+{
+    font-family: monospace;
+    font-size: 13px;
+    border: 2px solid #888;
+    resize: none; /* webkit only */
+    overflow: auto; /* hide that nasty scrollbar, IE! */
+}
+
+#io,
+#debugwindow
+{
+    float: left;
+    margin: 10px;
+}
+
+#controls
+{
+    margin-bottom: 5px;
+}
+
+#io
+{
+    width: 210px;
+    text-align: center;
+    background-color: #ccc;
+    border: 2px solid #888;
+    padding: 10px;
+}
+
+#controls input
+{
+    width: 65px;
+}
+
+#keyboard input
+{
+    width: 30px;
+}
+
+#scr
+{
+    border: 2px solid #aaa;
+    background-color: #fff;
+}
+
+.red
+{
+    background-color: #fcc;    
+}

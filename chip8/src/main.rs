@@ -1,9 +1,12 @@
 #![allow(dead_code, unused)]
 extern crate sdl2;
+extern crate rand;
 
 mod chip;
+mod ram;
+mod utils;
 
-use chip::ram;
+
 use std::env;
 use std::fs::File;
 use std::io::Read;

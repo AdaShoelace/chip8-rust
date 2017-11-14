@@ -5,3 +5,4 @@ authors = ["Pierre Leidbring <pierre.leidbring@gmail.com>"]
 
 [dependencies]
 sdl2 = "0.30"
+rand = "0.3.15"

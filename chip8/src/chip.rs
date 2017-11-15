@@ -6,8 +6,6 @@ use ram::Ram;
 use utils::*;
 
 
-pub const SCREEN_COLUMNS: usize = 64;
-pub const SCREEN_ROWS: usize = 32;
 
 pub struct Chip {
     pub I: u16,
@@ -18,7 +16,8 @@ pub struct Chip {
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub vid_mem: [u8; SCREEN_COLUMNS * SCREEN_ROWS],
-    pub stack: [u16; 16],
+    //pub stack: [u16; 16],
+    pub stack: Vec<u16>,
 }
 
 impl Chip {
@@ -32,7 +31,8 @@ impl Chip {
             SP: 0,
             sound_timer: 60,
             vid_mem: [0; SCREEN_COLUMNS * SCREEN_ROWS],
-            stack: [0; 16],
+            //stack: [0; 16],
+            stack: Vec::with_capacity(16),
         };
         chip
     }
@@ -43,6 +43,10 @@ impl Chip {
 
     pub fn execute(&self, opcode: u16) {}
 
+    fn decode_0NNN(&mut self, opcode: u16) {
+        println!("opcode 0NNN not implemented but used");
+    }
+
     fn decode_00E0(&mut self, opcode: u16) {
         for i in 0..self.vid_mem.len() {
             self.vid_mem[i] = 0;
@@ -50,9 +54,21 @@ impl Chip {
         //redraw_screen();
     }
 
+    fn decode_00EE(&mut self, opcode: u16) {
+        self.PC = match self.stack.pop() {
+            Some(x) => x as usize,
+            None => return,
+        };
+    }
     //JUMP to NNN
     fn decode_1NNN(&mut self, opcode: u16) {
         self.PC = get_NNN(opcode) as usize;
+    }
+
+    fn decode_2NNN(&mut self, opcode: u16) {
+        self.stack.push(self.PC as u16);
+        self.PC = get_NNN(opcode) as usize;
+
     }
 
     fn decode_3XNN(&mut self, opcode: u16) {
@@ -98,8 +114,8 @@ impl Chip {
     }
 
     fn decode_8XY4(&mut self, opcode: u16) {
-        let res = self.V[get_X(opcode) as usize] + self.V[get_Y(opcode) as usize] as u8;
-        self.V[get_X(opcode) as usize] = res;
+        let res = (self.V[get_X(opcode) as usize] + self.V[get_Y(opcode) as usize]) as u16;
+        self.V[get_X(opcode) as usize] = res as u8;
         self.V[0xf] = if res >= 0x100 { 1 } else { 0  };
     }
 

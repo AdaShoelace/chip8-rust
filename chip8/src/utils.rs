@@ -1,4 +1,9 @@
 #![allow(dead_code, unused_variables, non_snake_case)]
+
+pub const SCREEN_COLUMNS: usize = 64;
+pub const SCREEN_ROWS: usize = 32;
+pub const SCALE: usize = 20;
+
 pub fn get_NNN(opcode: u16) -> u16 {
     opcode & 0x0fff
 }

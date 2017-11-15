@@ -2,7 +2,7 @@
 
 use rand::Rng;
 use rand::thread_rng;
-use ram;
+use ram::Ram;
 use utils::*;
 
 
@@ -11,7 +11,7 @@ pub const SCREEN_ROWS: usize = 32;
 
 pub struct Chip {
     pub I: u16,
-    pub mem: ram::Ram,
+    pub mem: Ram,
     pub V: [u8; 16],
     pub PC: usize,
     pub SP: usize,
@@ -25,7 +25,7 @@ impl Chip {
     pub fn new() -> Chip {
         let chip = Chip {
             I: 0,
-            mem: ram::Ram::new(),
+            mem: Ram::new(),
             V: [0; 16],
             PC: 0x200,
             delay_timer: 60,
@@ -35,6 +35,10 @@ impl Chip {
             stack: [0; 16],
         };
         chip
+    }
+
+    pub fn print_mem(&self) {
+        self.mem.print();
     }
 
     pub fn execute(&self, opcode: u16) {}
@@ -174,7 +178,7 @@ impl Chip {
     }
 
     fn decode_FX33(&mut self, opcode: u16) {
-        let mut bcd: u16 = self.V[get_X(opcode) as usize] as u16;
+        let mut bcd: u8 = self.V[get_X(opcode) as usize] as u8;
         self.mem.write(self.I as usize + 0, bcd / 100);
         self.mem.write(self.I as usize + 1, (bcd / 10) & 10);
         self.mem.write(self.I as usize + 2, bcd % 10);
@@ -183,7 +187,7 @@ impl Chip {
     fn decode_FX55(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize; 
         for j in 0..last_reg {
-            self.mem.write(self.I as usize + j, self.V[j as usize] as u16);
+            self.mem.write(self.I as usize + j, self.V[j as usize] as u8);
             self.I += 1;
         }
     }

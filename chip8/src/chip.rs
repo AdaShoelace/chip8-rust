@@ -37,11 +37,48 @@ impl Chip {
         chip
     }
 
-    pub fn print_mem(&self) {
-        self.mem.print();
+    pub fn print_mem(&self, all: bool) {
+        self.mem.print(all);
     }
 
-    pub fn execute(&self, opcode: u16) {}
+    pub fn execute(&mut self) {
+        let opcode: u16 = self.mem.read(self.PC);
+
+        match opcode & 0xf000 {
+            0x0 => {
+                match opcode & 0x00ff {
+                    0x00e0 => self.decode_00E0(opcode),
+                    0x00ee => self.decode_00EE(opcode),
+                    _ => self.unimplemented(opcode),
+                };
+            },
+            0x1 => self.decode_1NNN(opcode),
+            0x2 => self.decode_2NNN(opcode),
+            0x3 => self.decode_3XNN(opcode),
+            0x4 => self.decode_4XNN(opcode),
+            0x5 => self.decode_5XY0(opcode),
+            0x6 => self.decode_6XNN(opcode),
+            0x7 => self.decode_7XNN(opcode),
+            0x8 => {
+                match opcode & 0x000f {
+                    0x0 => self.decode_8XY0(opcode),
+                    0x1 => self.decode_8XY1(opcode),
+                    0x2 => self.decode_8XY2(opcode),
+                    0x3 => self.decode_8XY3(opcode),
+                    0x4 => self.decode_8XY4(opcode),
+                    0x5 => self.decode_8XY5(opcode),
+                    0x6 => self.decode_8XY6(opcode),
+                    0x7 => self.decode_8XY7(opcode),
+                    0x8 => self.decode_8XY8(opcode),
+                    _ => self.unimplemented(opcode),
+                }
+            },
+            0x9 => self.decode_9XY0(opcode),
+
+            x => println!("Unimplemented opcode: {:#04X}", opcode & 0xff00),
+        };
+        self.PC += 2;
+    }
 
     fn decode_0NNN(&mut self, opcode: u16) {
         println!("opcode 0NNN not implemented but used");
@@ -189,8 +226,40 @@ impl Chip {
         //redraw_screen();
     }
 
+    fn decode_EX9E(&mut self, opcode: u16) {
+        //skip next instruction if key with value of VX is pressed
+    }
+
+    fn decode_EXA1(&mut self, opcode: u16) {
+        //skip next instruction if key with value of VX is NOT pressed
+    }
+
+    fn decode_FX07(&mut self, opcode: u16) {
+        //The value of delay timer is placed in VX
+        self.V[get_X(opcode) as usize] = self.delay_timer;
+    }
+
+    fn decode_FX0A(&mut self, opcode: u16) {
+        //wait for a keypress, store the value of the key in VX
+        //all execution stops until a key is pressed
+    }
+
+    fn decode_FX15(&mut self, opcode: u16) {
+        self.delay_timer = self.V[get_X(opcode) as usize] as u8;
+    }
+
+    fn decode_FX18(&mut self, opcode: u16) {
+        //set sound timer = to VX
+        self.sound_timer = self.V[get_X(opcode) as usize];
+    }
+
     fn decode_FX1E(&mut self, opcode: u16) {
         self.I = (self.I + self.V[get_X(opcode) as usize] as u16) & 0xfff;
+    }
+
+    fn decode_FX29(&mut self, opcode: u16) {
+        //might not be what the manual meant
+        self.I = self.mem.read(self.V[get_X(opcode) as usize] as usize);
     }
 
     fn decode_FX33(&mut self, opcode: u16) {
@@ -214,5 +283,9 @@ impl Chip {
             self.V[j] = self.mem.read(self.I as usize + j) as u8;
             self.I += 1;
         }
+    }
+
+    fn unimplemented(&self, opcode: u16) {
+        println!("Unimplemented opcode: {:#04X}", opcode);
     }
 }

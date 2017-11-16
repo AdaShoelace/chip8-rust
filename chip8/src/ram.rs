@@ -41,8 +41,15 @@ impl Ram {
         self.mem.len()
     }
 
-    pub fn print(&self) {
-        let mut i = 0x200;
+    pub fn print(&self, sprite: bool) {
+        let mut i; 
+        
+        if sprite {
+            i = 0;
+        } else {
+            i = 0x200;
+        }
+
         while i < self.get_length() - 2000 {
             println!(
                 "Addr: {:#4X} opcode: {:#2X} {:#2X}",
@@ -61,10 +68,11 @@ impl Ram {
             j += 1;
         }
 
+        /*
         println!("Print of ram after buffer has been read");
         for i in 0x200..0x250 {
             println!("Addr: {:#04X} Opcode: {:#04X}", i, self.mem[i]);
-        }
+        }*/
     }
 
     pub fn read(&self, addr: usize) -> u16 {

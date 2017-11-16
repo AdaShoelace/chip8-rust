@@ -16,7 +16,8 @@ use utils::*;
 
 use sfml::window::{VideoMode, ContextSettings, Event, Key, Style};
 use sfml::system::{Clock, Vector2f};
-use sfml::graphics::{RenderTarget, RectangleShape, Transformable, Drawable, RenderWindow, Shape, Color};
+use sfml::graphics::{RenderTarget, RectangleShape, Transformable, Drawable, RenderWindow, Shape,
+                     Color};
 
 const SCREEN_WIDTH: u32 = 64;
 const SCREEN_HEIGHT: u32 = 32;
@@ -30,9 +31,14 @@ fn main() {
     //chip.print_mem();
 
     //Window etc
-    let width = (SCREEN_COLUMNS*SCALE) as u32;
-    let height = (SCREEN_ROWS*SCALE) as u32;
-    let mut window = RenderWindow::new((width, height), "Chip8 Emulator", Style::CLOSE, &Default::default());
+    let width = (SCREEN_COLUMNS * SCALE) as u32;
+    let height = (SCREEN_ROWS * SCALE) as u32;
+    let mut window = RenderWindow::new(
+        (width, height),
+        "Chip8 Emulator",
+        Style::CLOSE,
+        &Default::default(),
+    );
 
     let mut rect = RectangleShape::new();
     rect.set_size((SCALE as f32, SCALE as f32));
@@ -42,18 +48,18 @@ fn main() {
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => return,
-                Event::KeyPressed {
-                    code: Key::Escape, ..
-                } => return,
+                Event::KeyPressed { code: Key::Escape, .. } => return,
                 _ => {}
             }
         }
+        chip.execute();
         window.clear(&Color::BLACK);
+        //casuses index out of bounds error -> panic
         for x in 0..SCREEN_COLUMNS {
             for y in 0..SCREEN_ROWS {
-                if chip.vid_mem[x * SCREEN_COLUMNS + y] == 1 {
-                    let x_pos = (x*SCALE) as f32;
-                    let y_pos = (y*SCALE) as f32;
+                if chip.vid_mem[y * SCREEN_COLUMNS + x] == 1 {
+                    let x_pos = (x * SCALE) as f32;
+                    let y_pos = (y * SCALE) as f32;
                     &mut rect.set_position((x_pos, y_pos));
                     window.draw(&rect);
                 }

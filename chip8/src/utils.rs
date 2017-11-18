@@ -23,3 +23,36 @@ pub fn get_X(opcode: u16) -> u16 {
 pub fn get_Y(opcode: u16) -> u16 {
     (opcode & 0x00f0) >> 4
 }
+
+#[cfg(test)]
+mod tests {
+
+    use utils::*;
+    const opcode: u16 = 0xd104; 
+
+    #[test]
+    fn test_X() { 
+        let res = get_X(opcode) as usize;
+        assert!(res == 0x1);
+    }
+    #[test]
+    fn test_Y() { 
+        let res = get_Y(opcode) as usize;
+        assert!(res == 0x0);
+    }
+    #[test]
+    fn test_N() { 
+        let res = get_N(opcode) as usize;
+        assert!(res == 0x4);
+    }
+    #[test]
+    fn test_NN() { 
+        let res = get_NN(opcode);
+        assert!(res == 0x04);
+    }
+    #[test]
+    fn test_NNN() { 
+        let res = get_NNN(opcode);
+        assert!(res == 0x104);
+    }
+}

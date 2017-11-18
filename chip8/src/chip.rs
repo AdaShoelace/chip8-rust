@@ -15,9 +15,11 @@ pub struct Chip {
     pub SP: usize,
     pub delay_timer: u8,
     pub sound_timer: u8,
-    pub vid_mem: [u8; SCREEN_COLUMNS * SCREEN_ROWS],
+    //pub vid_mem: [u8; SCREEN_COLUMNS * SCREEN_ROWS],
+    pub vid_mem: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS],
     //pub stack: [u16; 16],
     pub stack: Vec<u16>,
+    pub draw: bool,
 }
 
 impl Chip {
@@ -27,12 +29,12 @@ impl Chip {
             mem: Ram::new(),
             V: [0; 16],
             PC: 0x200,
-            delay_timer: 60,
+            delay_timer: 0,
             SP: 0,
-            sound_timer: 60,
-            vid_mem: [0; SCREEN_COLUMNS * SCREEN_ROWS],
-            //stack: [0; 16],
+            sound_timer: 0,
+            vid_mem: [[0; SCREEN_COLUMNS]; SCREEN_ROWS],
             stack: Vec::with_capacity(16),
+            draw: false,
         };
         chip
     }
@@ -41,17 +43,26 @@ impl Chip {
         self.mem.print(all);
     }
 
-    pub fn execute(&mut self) {
-        let opcode: u16 = self.mem.read(self.PC);
+    fn fetch(&mut self) -> u16{
+        let opcode = self.mem.read(self.PC);
+        self.PC += 2;
+        opcode
+    }
 
-        match opcode & 0xf000 {
+    pub fn emulate_cycle(&mut self) {
+        let opcode = self.fetch();
+        self.execute(opcode);
+    }
+
+    fn execute(&mut self, opcode: u16) {
+        match (opcode & 0xf000) >> 12 {
             0x0 => {
                 match opcode & 0x00ff {
                     0x00e0 => self.decode_00E0(opcode),
                     0x00ee => self.decode_00EE(opcode),
-                    _ => self.unimplemented(opcode),
+                    _ => {} //self.unimplemented(opcode),
                 };
-            },
+            }
             0x1 => self.decode_1NNN(opcode),
             0x2 => self.decode_2NNN(opcode),
             0x3 => self.decode_3XNN(opcode),
@@ -69,15 +80,38 @@ impl Chip {
                     0x5 => self.decode_8XY5(opcode),
                     0x6 => self.decode_8XY6(opcode),
                     0x7 => self.decode_8XY7(opcode),
-                    0x8 => self.decode_8XY8(opcode),
-                    _ => self.unimplemented(opcode),
+                    0xe => self.decode_8XYE(opcode),
+                    _ => {} //self.unimplemented(opcode),
                 }
-            },
+            }
             0x9 => self.decode_9XY0(opcode),
-
-            x => println!("Unimplemented opcode: {:#04X}", opcode & 0xff00),
+            0xa => self.decode_ANNN(opcode),
+            0xb => self.decode_BNNN(opcode),
+            0xc => self.decode_CXNN(opcode),
+            0xd => self.decode_DXYN(opcode),
+            0xe => {
+                match opcode & 0x00ff {
+                    0x9e => self.decode_EX9E(opcode),
+                    0xa1 => self.decode_EXA1(opcode),
+                    _ => {} //self.unimplemented(opcode),
+                }
+            }
+            0xf => {
+                match opcode & 0x00ff {
+                    0x07 => self.decode_FX07(opcode),
+                    0x0a => self.decode_FX0A(opcode),
+                    0x15 => self.decode_FX15(opcode),
+                    0x18 => self.decode_FX18(opcode),
+                    0x1e => self.decode_FX1E(opcode),
+                    0x29 => self.decode_FX29(opcode),
+                    0x33 => self.decode_FX33(opcode),
+                    0x55 => self.decode_FX55(opcode),
+                    0x65 => self.decode_FX65(opcode),
+                    _ => {} //self.unimplemented(opcode),
+                }
+            }
+            _ => {}//self.unimplemented(opcode),
         };
-        self.PC += 2;
     }
 
     fn decode_0NNN(&mut self, opcode: u16) {
@@ -85,16 +119,18 @@ impl Chip {
     }
 
     fn decode_00E0(&mut self, opcode: u16) {
-        for i in 0..self.vid_mem.len() {
-            self.vid_mem[i] = 0;
-        } 
-        //redraw_screen();
+        for i in 0..(SCREEN_ROWS - 1) {
+            for j in 0..(SCREEN_COLUMNS - 1) {
+                self.vid_mem[i][j] = 0;
+            }
+        }
+        self.draw = true; //is this right?
     }
 
     fn decode_00EE(&mut self, opcode: u16) {
         self.PC = match self.stack.pop() {
             Some(x) => x as usize,
-            None => return,
+            None => self.PC,
         };
     }
     //JUMP to NNN
@@ -110,33 +146,34 @@ impl Chip {
 
     fn decode_3XNN(&mut self, opcode: u16) {
         if self.V[get_X(opcode) as usize] == get_NN(opcode) as u8 {
-            self.PC += 2; 
+            self.PC += 2;
         }
     }
 
     fn decode_4XNN(&mut self, opcode: u16) {
         if self.V[get_X(opcode) as usize] != get_NN(opcode) as u8 {
-            self.PC += 2; 
+            self.PC += 2;
         }
     }
 
     fn decode_5XY0(&mut self, opcode: u16) {
         if self.V[get_X(opcode) as usize] == self.V[get_Y(opcode) as usize] {
-            self.PC += 2; 
+            self.PC += 2;
         }
-    } 
+    }
 
     fn decode_6XNN(&mut self, opcode: u16) {
-        self.V[get_X(opcode) as usize] = get_NN(opcode) as u8;
-    } 
+        self.write_to_reg(get_X(opcode) as u8, get_NN(opcode) as u8);
+    }
 
     fn decode_7XNN(&mut self, opcode: u16) {
-        self.V[get_X(opcode) as usize] += get_NN(opcode) as u8;
-    } 
+        let vx = self.V[get_X(opcode) as usize];
+        self.V[get_X(opcode) as usize] = vx.wrapping_add(get_NN(opcode) as u8);
+    }
 
     fn decode_8XY0(&mut self, opcode: u16) {
         self.V[get_X(opcode) as usize] = self.V[get_Y(opcode) as usize];
-    } 
+    }
 
     fn decode_8XY1(&mut self, opcode: u16) {
         self.V[get_X(opcode) as usize] |= self.V[get_Y(opcode) as usize];
@@ -151,15 +188,26 @@ impl Chip {
     }
 
     fn decode_8XY4(&mut self, opcode: u16) {
-        let res = (self.V[get_X(opcode) as usize] + self.V[get_Y(opcode) as usize]) as u16;
+        let res = self.V[get_X(opcode) as usize] as u16 + self.V[get_Y(opcode) as usize] as u16;
         self.V[get_X(opcode) as usize] = res as u8;
-        self.V[0xf] = if res >= 0x100 { 1 } else { 0  };
+        self.V[0xf] = if res > 0x100 { 1 } else { 0 };
     }
 
     fn decode_8XY5(&mut self, opcode: u16) {
-        let res = self.V[get_X(opcode) as usize] as i8 - self.V[get_Y(opcode) as usize] as i8;
-        self.V[get_X(opcode) as usize] = res as u8;
-        self.V[0xf] = if res >= 0 { 1 } else { 0  };
+        //let res = self.V[get_X(opcode) as usize] as i8 - self.V[get_Y(opcode) as usize] as i8;
+        //self.V[get_X(opcode) as usize] = res as u8;
+        //self.V[0xf] = if res >= 0 { 1 } else { 0 };
+
+        let x = self.V[get_X(opcode) as usize] as u8;
+        let y = self.V[get_Y(opcode) as usize] as u8;
+
+        if x > y {
+            self.V[0xf] = 0;
+        } else {
+            self.V[0xf] = 1;
+        }
+
+        self.V[get_X(opcode) as usize].wrapping_sub(self.V[get_Y(opcode) as usize]);
     }
 
     fn decode_8XY6(&mut self, opcode: u16) {
@@ -171,12 +219,19 @@ impl Chip {
     }
 
     fn decode_8XY7(&mut self, opcode: u16) {
-        let res = self.V[get_Y(opcode) as usize] as i8 - self.V[get_X(opcode) as usize] as i8;
-        self.V[get_X(opcode) as usize] = res as u8;
-        self.V[0xf] = if res >= 0 { 1 } else { 0  };
+        let vx = self.read_reg(get_X(opcode) as u8);
+        let vy = self.read_reg(get_Y(opcode) as u8);
+
+        if vy > vx {
+            self.write_to_reg(0xf, 0x1);
+        } else {
+            self.write_to_reg(0xf, 0x0);
+        }
+
+        self.write_to_reg(get_X(opcode) as u8, vy.wrapping_sub(vx));
     }
 
-    fn decode_8XY8(&mut self, opcode: u16) {
+    fn decode_8XYE(&mut self, opcode: u16) {
         let msb = self.V[get_X(opcode) as usize] >> 7;
         let res = self.V[get_X(opcode) as usize] << 1;
         self.V[get_X(opcode) as usize] = res;
@@ -186,12 +241,12 @@ impl Chip {
 
     fn decode_9XY0(&mut self, opcode: u16) {
         if self.V[get_X(opcode) as usize] != self.V[get_Y(opcode) as usize] {
-            self.PC += 2; 
+            self.PC += 2;
         }
     }
 
     fn decode_ANNN(&mut self, opcode: u16) {
-        self.I = get_NNN(opcode); 
+        self.I = get_NNN(opcode);
     }
 
     fn decode_BNNN(&mut self, opcode: u16) {
@@ -201,29 +256,29 @@ impl Chip {
 
     fn decode_CXNN(&mut self, opcode: u16) {
         let mut rng = thread_rng();
-        self.V[get_X(opcode) as usize] = rng.next_u32() as u8  & get_NN(opcode) as u8;
+        self.V[get_X(opcode) as usize] = rng.next_u32() as u8 & get_NN(opcode) as u8;
     }
 
-    fn decode_DXYN(&mut self, opcode: u16) {
-        let mut x = (self.V[get_X(opcode) as usize] % 64) as usize; //Wrap around? 
-        let mut y = (self.V[get_Y(opcode) as usize] % 32) as usize; 
-        let n = get_N(opcode);
-        let mut flipped = false;
+    pub fn decode_DXYN(&mut self, opcode: u16) {
+        let col = (self.V[get_X(opcode) as usize] % 64) as usize;
+        let row = (self.V[get_Y(opcode) as usize] % 32) as usize;
+        let height = get_N(opcode) as usize;
+        let mut pixel: u16;
+        self.V[0xf] = 0;
 
-        for j in 0..n {
-            let mut px = self.mem.read(self.I as usize + j as usize) as u8;
-            y += 1usize;  
-            
-            for k in 0..8 {
-                let mut p_bit: u8 = (px >> k) & 1;
-                if self.vid_mem[x + k + y * 64] == 1 && p_bit == 1 {
-                    flipped |= true;
+        for row_off in 0..height {
+            pixel = self.mem.read((self.I as usize + row_off) as usize);
+            pixel >>= 8;
+            for col_off in 0..8 {
+                if pixel & (0x80 >> col_off) > 0 {
+                    if self.vid_mem[(row + row_off) % 32][(col + col_off) % 64] == 1 {
+                        self.V[0xf] = 1;
+                    }
+                    self.vid_mem[(row + row_off) % 32][(col + col_off) % 64] ^= 1
                 }
-                self.vid_mem[x + k + y * 64] ^= p_bit;
             }
         }
-        self.V[0x0f] = if flipped { 1 } else { 0 };
-        //redraw_screen();
+        self.draw = true;
     }
 
     fn decode_EX9E(&mut self, opcode: u16) {
@@ -265,27 +320,75 @@ impl Chip {
     fn decode_FX33(&mut self, opcode: u16) {
         let mut bcd: u8 = self.V[get_X(opcode) as usize] as u8;
         self.mem.write(self.I as usize + 0, bcd / 100);
-        self.mem.write(self.I as usize + 1, (bcd / 10) & 10);
+        self.mem.write(self.I as usize + 1, (bcd / 10) % 10);
         self.mem.write(self.I as usize + 2, bcd % 10);
     }
 
     fn decode_FX55(&mut self, opcode: u16) {
-        let last_reg = get_X(opcode) as usize; 
+        let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg {
-            self.mem.write(self.I as usize + j, self.V[j as usize] as u8);
+            self.mem.write(
+                self.I as usize + j,
+                self.V[j as usize] as u8,
+            );
             self.I += 1;
         }
     }
 
     fn decode_FX65(&mut self, opcode: u16) {
-        let last_reg = get_X(opcode) as usize; 
+        let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg {
             self.V[j] = self.mem.read(self.I as usize + j) as u8;
             self.I += 1;
         }
     }
 
+    fn write_to_reg(&mut self, i: u8, val: u8) {
+        self.V[i as usize] = val;
+    }
+
+    fn read_reg(&mut self, i: u8) -> u8 {
+        self.V[i as usize]
+    }
+
     fn unimplemented(&self, opcode: u16) {
         println!("Unimplemented opcode: {:#04X}", opcode);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use utils::{SCREEN_COLUMNS, SCREEN_ROWS};
+    use chip::*;
+    #[test]
+    fn frame_buf() {
+        let frm_buf:[[u8;SCREEN_COLUMNS];SCREEN_ROWS] = [[0;SCREEN_COLUMNS];SCREEN_ROWS];
+
+        let mut c = Chip::new();
+
+        let opcode: u16 = 0xd004; 
+        assert!(c.I == 0);
+        c.mem.write((c.I + 0) as usize, 0b00011000u8);
+        c.mem.write((c.I + 1) as usize, 0b00100100u8);
+        c.mem.write((c.I + 2) as usize, 0b00100100u8);
+        c.mem.write((c.I + 3) as usize, 0b00011000u8);
+        
+        c.decode_DXYN(opcode);
+
+        print_buf(&c.vid_mem);
+         
+    }
+
+    fn print_buf(buf: &[[u8;SCREEN_COLUMNS];SCREEN_ROWS]) {
+        for k in 0..SCREEN_COLUMNS+2 { print!{"-"}; };
+        println!();
+        for i in 0..SCREEN_ROWS {
+            print!("|");
+            for j in 0..SCREEN_COLUMNS {
+                print!("{}", buf[i][j]);
+            }
+            println!("|");
+        }
+        for k in 0..SCREEN_COLUMNS+2 { print!{"-"}; };
     }
 }

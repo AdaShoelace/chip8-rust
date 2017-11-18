@@ -27,7 +27,7 @@ impl Ram {
             [0xF0, 0x80, 0xF0, 0x80, 0x80],
         ];
 
-        let mut i = 0;
+        let mut i = 0x50;
         for sprite in &sprites {
             for pos in sprite {
                 ram.mem[i] = *pos;
@@ -68,11 +68,17 @@ impl Ram {
             j += 1;
         }
 
-        /*
+        
         println!("Print of ram after buffer has been read");
-        for i in 0x200..0x250 {
-            println!("Addr: {:#04X} Opcode: {:#04X}", i, self.mem[i]);
-        }*/
+        let mut res: u16;
+        let mut i = 0x200;
+        while i < 0x250 {
+            res = self.mem[i] as u16;
+            res <<= 8;
+            res |= self.mem[i+1] as u16;
+            println!("Addr: {:#04X} Opcode: {:#08X}", i, res);
+            i += 2;
+        }
     }
 
     pub fn read(&self, addr: usize) -> u16 {
@@ -83,5 +89,26 @@ impl Ram {
 
     pub fn write(&mut self, addr: usize, data: u8) {
         self.mem[addr] = data;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ram::*;
+
+    #[test]
+    fn test_read() {
+        let mut r = Ram::new();
+        r.mem[0x202] = 0x33;
+        r.mem[0x203] = 0x44;
+        let res: u16 = r.read(0x202usize);
+        assert!(res == 0x3344);
+    }
+
+    #[test]
+    fn test_write() {
+        let mut r = Ram::new();
+        r.write(0x200usize, 0x33);
+        assert!(r.mem[0x200usize] == 0x33);
     }
 }

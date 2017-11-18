@@ -15,7 +15,7 @@ use chip::Chip;
 use utils::*;
 
 use sfml::window::{VideoMode, ContextSettings, Event, Key, Style};
-use sfml::system::{Clock, Vector2f};
+use sfml::system::{Time, Clock, Vector2f};
 use sfml::graphics::{RenderTarget, RectangleShape, Transformable, Drawable, RenderWindow, Shape,
                      Color};
 
@@ -28,6 +28,7 @@ fn main() {
 
     let mut chip = Chip::new();
     load_rom(arg1, &mut chip);
+    chip.print_mem(true);
     //chip.print_mem();
 
     //Window etc
@@ -44,7 +45,13 @@ fn main() {
     rect.set_size((SCALE as f32, SCALE as f32));
     rect.set_fill_color(&Color::WHITE);
 
+    let mut clock: Clock = Clock::start();
+    let mut current_time: Time;
     while window.is_open() {
+        while clock.elapsed_time().as_milliseconds() < 1000/60 {
+             
+        }
+        current_time = clock.restart();
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => return,
@@ -52,20 +59,46 @@ fn main() {
                 _ => {}
             }
         }
-        chip.execute();
-        window.clear(&Color::BLACK);
-        //casuses index out of bounds error -> panic
-        for x in 0..SCREEN_COLUMNS {
-            for y in 0..SCREEN_ROWS {
-                if chip.vid_mem[y * SCREEN_COLUMNS + x] == 1 {
-                    let x_pos = (x * SCALE) as f32;
-                    let y_pos = (y * SCALE) as f32;
-                    &mut rect.set_position((x_pos, y_pos));
-                    window.draw(&rect);
+        chip.emulate_cycle();
+
+        //Handle timers
+        /*current_time = clock.elapsed_time();
+        if current_time.as_milliseconds() > 16 {
+            let ticks = (current_time.as_milliseconds() / 16) as u8;
+
+            let temp_del = chip.delay_timer as i16;
+            let temp_sound = chip.sound_timer as i16;
+            let delay_val = (temp_del - ticks as i16) as i16;
+            let sound_val = (temp_sound - ticks as i16) as i16;
+            chip.delay_timer = if delay_val > 0 { delay_val } else { 0 } as u8;
+            chip.delay_timer = if sound_val > 0 { sound_val } else { 0 } as u8;
+            clock.restart();
+        }*/
+        let ticks = (current_time.as_milliseconds() / 16) as u8;
+
+        let temp_del = chip.delay_timer as i16;
+        let temp_sound = chip.sound_timer as i16;
+        let delay_val = (temp_del - ticks as i16) as i16;
+        let sound_val = (temp_sound - ticks as i16) as i16;
+        chip.delay_timer = if delay_val > 0 { delay_val } else { 0 } as u8;
+        chip.delay_timer = if sound_val > 0 { sound_val } else { 0 } as u8;
+
+        if chip.draw {
+            chip.draw = false;
+            window.clear(&Color::BLACK);
+            //casuses index out of bounds error -> panic
+            for x in 0..SCREEN_COLUMNS {
+                for y in 0..SCREEN_ROWS {
+                    if chip.vid_mem[y][x] == 1 {
+                        let x_pos = (x * SCALE) as f32;
+                        let y_pos = (y * SCALE) as f32;
+                        &mut rect.set_position((x_pos, y_pos));
+                        window.draw(&rect);
+                    }
                 }
             }
+            window.display();
         }
-        window.display();
     }
 }
 

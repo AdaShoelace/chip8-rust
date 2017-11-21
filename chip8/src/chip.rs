@@ -28,8 +28,8 @@ impl Chip {
             mem: Ram::new(),
             V: [0; 16],
             PC: 0x200,
-            delay_timer: 0,
             SP: 0,
+            delay_timer: 0,
             sound_timer: 0,
             vid_mem: [[0; SCREEN_COLUMNS]; SCREEN_ROWS],
             stack: Vec::with_capacity(16),
@@ -124,7 +124,7 @@ impl Chip {
                 self.vid_mem[i][j] = 0;
             }
         }
-        //self.draw = true; //is this right?
+        self.draw = true; //is this right?
     }
 
     fn decode_00EE(&mut self, opcode: u16) {
@@ -194,10 +194,6 @@ impl Chip {
     }
 
     fn decode_8XY5(&mut self, opcode: u16) {
-        //let res = self.V[get_X(opcode) as usize] as i8 - self.V[get_Y(opcode) as usize] as i8;
-        //self.V[get_X(opcode) as usize] = res as u8;
-        //self.V[0xf] = if res >= 0 { 1 } else { 0 };
-
         let x = self.V[get_X(opcode) as usize] as u8;
         let y = self.V[get_Y(opcode) as usize] as u8;
 
@@ -227,16 +223,13 @@ impl Chip {
         } else {
             self.write_to_reg(0xf, 0x0);
         }
-
         self.write_to_reg(get_X(opcode) as u8, vy.wrapping_sub(vx));
     }
 
     fn decode_8XYE(&mut self, opcode: u16) {
-        let msb = self.V[get_X(opcode) as usize] >> 7;
-        let res = self.V[get_X(opcode) as usize] << 1;
-        self.V[get_X(opcode) as usize] = res;
-        self.V[get_Y(opcode) as usize] = res;
-        self.V[0xf] = msb;
+        let msb = (self.read_reg(get_X(opcode) as u8) >> 7) & 1;
+        let mul = self.read_reg(get_X(opcode) as u8) * 2;
+        self.write_to_reg(get_X(opcode) as u8, mul);
     }
 
     fn decode_9XY0(&mut self, opcode: u16) {
@@ -367,7 +360,7 @@ impl Chip {
         self.V[i as usize] = val;
     }
 
-    fn read_reg(&mut self, i: u8) -> u8 {
+    fn read_reg(&self, i: u8) -> u8 {
         self.V[i as usize]
     }
 

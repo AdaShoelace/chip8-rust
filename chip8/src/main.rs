@@ -49,9 +49,10 @@ fn main() {
     let mut clock: Clock = Clock::start();
     let mut current_time: Time;
     while window.is_open() {
-        while clock.elapsed_time().as_milliseconds() < 100 / 60 {}
-
+        while clock.elapsed_time().as_seconds() < (1 / 60) as f32 {}
         current_time = clock.restart();
+
+        read_keys(&mut chip, &window);
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => return,
@@ -59,9 +60,10 @@ fn main() {
                 _ => {}
             }
         }
-        read_keys(&mut chip, &window);
+
         chip.emulate_cycle();
-        let ticks = (current_time.as_milliseconds() / 16) as u8;
+
+        let ticks = (current_time.as_milliseconds() % 16) as u8;
         let temp_del = chip.delay_timer as i16;
         let temp_sound = chip.sound_timer as i16;
         let delay_val = (temp_del - ticks as i16) as i16;
@@ -72,7 +74,6 @@ fn main() {
         if chip.draw {
             chip.draw = false;
             window.clear(&Color::BLACK);
-            //casuses index out of bounds error -> panic
             for x in 0..SCREEN_COLUMNS {
                 for y in 0..SCREEN_ROWS {
                     if chip.vid_mem[y][x] == 1 {

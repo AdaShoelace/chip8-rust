@@ -121,11 +121,3 @@ fn load_rom(filename: String, chip: &mut Chip) {
     }
     chip.mem.write_rom(&buf);
 }
-
-//wanna figure this out for stopping execution when waiting for keypress
-fn delay<T, F>(args: &[T], func: F)
-where
-    F: Fn(&[T]),
-{
-    func(args);
-}

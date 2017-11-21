@@ -1,5 +1,6 @@
 # chip8-rust
-![alt text](https://github.com/PierreLeidbring/chip8-rust/img/c8.png "Logo Title Text 1")
+
+![Alt text](https://github.com/PierreLeidbring/chip8-rust/blob/master/img/c8.png "Screenshot")
 
 ## Intent
 This project is intended as a program suite focused on the chip8.  
@@ -15,7 +16,13 @@ Worth noting is that this is written solely for my own amusement and with the so
 Whoever want to try it out or even modify it are welcome to do so!  
 Please feel free to make pull requests if you have ways to better the code or find bugs.  
 
-## Issues currently worked on
+## Issues and wanted features
+### Emulator
 - [ ] Clockspeed/timer countdown
 - [ ] Freezing upon collision
-
+### Debugger
+* TBA
+### Disassembler
+* TBA
+### Assembler
+* TBA

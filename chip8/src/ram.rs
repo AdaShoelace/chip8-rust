@@ -27,7 +27,8 @@ impl Ram {
             [0xF0, 0x80, 0xF0, 0x80, 0x80],
         ];
 
-        let mut i = 0x50;
+        //let mut i = 0x50;
+        let mut i = 0;
         for sprite in &sprites {
             for pos in sprite {
                 ram.mem[i] = *pos;

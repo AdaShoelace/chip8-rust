@@ -15,10 +15,9 @@ pub struct Chip {
     pub SP: usize,
     pub delay_timer: u8,
     pub sound_timer: u8,
-    //pub vid_mem: [u8; SCREEN_COLUMNS * SCREEN_ROWS],
     pub vid_mem: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS],
-    //pub stack: [u16; 16],
     pub stack: Vec<u16>,
+    pub key: [bool; 16],
     pub draw: bool,
 }
 
@@ -34,6 +33,7 @@ impl Chip {
             sound_timer: 0,
             vid_mem: [[0; SCREEN_COLUMNS]; SCREEN_ROWS],
             stack: Vec::with_capacity(16),
+            key: [false; 16],
             draw: false,
         };
         chip
@@ -43,7 +43,7 @@ impl Chip {
         self.mem.print(all);
     }
 
-    fn fetch(&mut self) -> u16{
+    fn fetch(&mut self) -> u16 {
         let opcode = self.mem.read(self.PC);
         self.PC += 2;
         opcode
@@ -124,7 +124,7 @@ impl Chip {
                 self.vid_mem[i][j] = 0;
             }
         }
-        self.draw = true; //is this right?
+        //self.draw = true; //is this right?
     }
 
     fn decode_00EE(&mut self, opcode: u16) {
@@ -283,10 +283,16 @@ impl Chip {
 
     fn decode_EX9E(&mut self, opcode: u16) {
         //skip next instruction if key with value of VX is pressed
+        if self.key[self.V[get_X(opcode) as usize] as usize] == true {
+            self.PC += 2;
+        }
     }
 
     fn decode_EXA1(&mut self, opcode: u16) {
         //skip next instruction if key with value of VX is NOT pressed
+        if self.key[self.V[get_X(opcode) as usize] as usize] == false {
+            self.PC += 2;
+        }
     }
 
     fn decode_FX07(&mut self, opcode: u16) {
@@ -294,9 +300,23 @@ impl Chip {
         self.V[get_X(opcode) as usize] = self.delay_timer;
     }
 
+    //test fails
     fn decode_FX0A(&mut self, opcode: u16) {
         //wait for a keypress, store the value of the key in VX
         //all execution stops until a key is pressed
+
+        let mut pressed = false;
+
+        for i in 0..self.key.len() {
+            if self.key[i] == true {
+                print!("Inne");
+                &mut self.write_to_reg(get_X(opcode) as u8, i as u8);
+                pressed = true;
+            }
+        }
+        if !pressed {
+            self.PC -= 2;
+        }
     }
 
     fn decode_FX15(&mut self, opcode: u16) {
@@ -362,25 +382,39 @@ mod tests {
     use chip::*;
     #[test]
     fn frame_buf() {
-        let frm_buf:[[u8;SCREEN_COLUMNS];SCREEN_ROWS] = [[0;SCREEN_COLUMNS];SCREEN_ROWS];
+        let frm_buf: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS] = [[0; SCREEN_COLUMNS]; SCREEN_ROWS];
 
         let mut c = Chip::new();
 
-        let opcode: u16 = 0xd004; 
+        let opcode: u16 = 0xd004;
         assert!(c.I == 0);
         c.mem.write((c.I + 0) as usize, 0b00011000u8);
         c.mem.write((c.I + 1) as usize, 0b00100100u8);
         c.mem.write((c.I + 2) as usize, 0b00100100u8);
         c.mem.write((c.I + 3) as usize, 0b00011000u8);
-        
+
         c.decode_DXYN(opcode);
 
         print_buf(&c.vid_mem);
-         
+
     }
 
-    fn print_buf(buf: &[[u8;SCREEN_COLUMNS];SCREEN_ROWS]) {
-        for k in 0..SCREEN_COLUMNS+2 { print!{"-"}; };
+    #[test]
+    fn test_FX0A() {
+        let mut c = Chip::new();
+        let opcode: u16 = 0xF30A;
+        c.key[5] = 1;
+        c.PC = 2;
+        c.decode_FX0A(opcode);
+        assert!(c.PC == 2 as usize);
+        assert!(c.read_reg(get_X(opcode) as u8) == c.key[5]);
+
+    }
+
+    fn print_buf(buf: &[[u8; SCREEN_COLUMNS]; SCREEN_ROWS]) {
+        for k in 0..SCREEN_COLUMNS + 2 {
+            print!{"-"};
+        }
         println!();
         for i in 0..SCREEN_ROWS {
             print!("|");
@@ -389,6 +423,8 @@ mod tests {
             }
             println!("|");
         }
-        for k in 0..SCREEN_COLUMNS+2 { print!{"-"}; };
+        for k in 0..SCREEN_COLUMNS + 2 {
+            print!{"-"};
+        }
     }
 }

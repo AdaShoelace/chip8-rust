@@ -40,6 +40,7 @@ fn main() {
         Style::CLOSE,
         &Default::default(),
     );
+    
 
     let mut rect = RectangleShape::new();
     rect.set_size((SCALE as f32, SCALE as f32));
@@ -48,9 +49,8 @@ fn main() {
     let mut clock: Clock = Clock::start();
     let mut current_time: Time;
     while window.is_open() {
-        while clock.elapsed_time().as_milliseconds() < 1000/60 {
-             
-        }
+        while clock.elapsed_time().as_milliseconds() < 100 / 60 {}
+
         current_time = clock.restart();
         while let Some(event) = window.poll_event() {
             match event {
@@ -59,23 +59,9 @@ fn main() {
                 _ => {}
             }
         }
+        read_keys(&mut chip, &window);
         chip.emulate_cycle();
-
-        //Handle timers
-        /*current_time = clock.elapsed_time();
-        if current_time.as_milliseconds() > 16 {
-            let ticks = (current_time.as_milliseconds() / 16) as u8;
-
-            let temp_del = chip.delay_timer as i16;
-            let temp_sound = chip.sound_timer as i16;
-            let delay_val = (temp_del - ticks as i16) as i16;
-            let sound_val = (temp_sound - ticks as i16) as i16;
-            chip.delay_timer = if delay_val > 0 { delay_val } else { 0 } as u8;
-            chip.delay_timer = if sound_val > 0 { sound_val } else { 0 } as u8;
-            clock.restart();
-        }*/
         let ticks = (current_time.as_milliseconds() / 16) as u8;
-
         let temp_del = chip.delay_timer as i16;
         let temp_sound = chip.sound_timer as i16;
         let delay_val = (temp_del - ticks as i16) as i16;
@@ -96,28 +82,30 @@ fn main() {
                         window.draw(&rect);
                     }
                 }
-            }
-            window.display();
-        }
-    }
-}
-
-/*
-fn draw_buffer(buf: &[u8;64*32], win: &mut RenderWindow, rect: &mut RectangleShape<'static>) {
-    //take in renderwindow and buffer
-
-    for x in 0..SCREEN_COLUMNS {
-        for y in 0..SCREEN_ROWS {
-            if buf[x * SCREEN_COLUMNS + y] == 1 {
-                let x_pos = (x*SCALE) as f32;
-                let y_pos = (y*SCALE) as f32;
-                &mut rect.set_position((x_pos, y_pos));
-                win.draw(&rect);
+                window.display();
             }
         }
     }
 }
-*/
+
+fn read_keys(chip: &mut Chip, window: &RenderWindow) {
+    chip.key[0] = Key::Num1.is_pressed();
+    chip.key[1] = Key::Num2.is_pressed();
+    chip.key[2] = Key::Num3.is_pressed();
+    chip.key[3] = Key::Num4.is_pressed();
+    chip.key[4] = Key::Q.is_pressed();
+    chip.key[5] = Key::W.is_pressed();
+    chip.key[6] = Key::E.is_pressed();
+    chip.key[7] = Key::R.is_pressed();
+    chip.key[8] = Key::A.is_pressed();
+    chip.key[9] = Key::S.is_pressed();
+    chip.key[10] = Key::D.is_pressed();
+    chip.key[11] = Key::F.is_pressed();
+    chip.key[12] = Key::Z.is_pressed();
+    chip.key[13] = Key::X.is_pressed();
+    chip.key[14] = Key::C.is_pressed();
+    chip.key[15] = Key::V.is_pressed();
+}
 
 fn load_rom(filename: String, chip: &mut Chip) {
     let mut f = File::open(&filename).unwrap();
@@ -131,4 +119,12 @@ fn load_rom(filename: String, chip: &mut Chip) {
         println!("{:#04X}", buf[i]);
     }
     chip.mem.write_rom(&buf);
+}
+
+//wanna figure this out for stopping execution when waiting for keypress
+fn delay<T, F>(args: &[T], func: F)
+where
+    F: Fn(&[T]),
+{
+    func(args);
 }

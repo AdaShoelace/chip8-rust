@@ -18,8 +18,8 @@ Please feel free to make pull requests if you have ways to better the code or fi
 
 ## Issues and wanted features
 ### Emulator
-- [ ] Clockspeed/timer countdown
-- [ ] Freezing upon collision
+- [x] Clockspeed/timer countdown
+- [x] Freezing upon collision
 ### Debugger
 * TBA
 ### Disassembler

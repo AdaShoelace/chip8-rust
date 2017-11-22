@@ -142,6 +142,7 @@ impl Chip {
     }
 
     fn decode_3XNN(&mut self, opcode: u16) {
+        println!("Inside 3XNN| VX = {}, NN = {}", self.V[get_X(opcode) as usize], get_NN(opcode)as u8);
         if self.V[get_X(opcode) as usize] == get_NN(opcode) as u8 {
             self.PC += 2;
         }
@@ -193,12 +194,16 @@ impl Chip {
     fn decode_8XY5(&mut self, opcode: u16) {
         let x = self.V[get_X(opcode) as usize] as u8;
         let y = self.V[get_Y(opcode) as usize] as u8;
+        
+        println!("VX = {}, VY = {}", x, y);
 
-        if x < y {
-            self.V[0xf] = 0;
-        } else {
+        if x > y {
             self.V[0xf] = 1;
+        } else {
+            self.V[0xf] = 0;
         }
+        
+        println!("VF = {}", self.read_reg(0xf));
 
         self.V[get_X(opcode) as usize].wrapping_sub(self.V[get_Y(opcode) as usize]);
     }
@@ -390,7 +395,7 @@ mod tests {
 
         c.decode_DXYN(opcode);
 
-        print_buf(&c.vid_mem);
+        //print_buf(&c.vid_mem);
 
     }
 
@@ -404,6 +409,38 @@ mod tests {
         assert!(c.PC == 2 as usize);
         assert!(c.read_reg(get_X(opcode) as u8) == 5);
 
+    }
+
+    #[test]
+    fn test_3XNN() {
+        let mut c = Chip::new();
+        let opcode: u16 = 0x3340;
+        c.V[3] = 0x40;
+        c.PC = 4;
+        c.decode_3XNN(opcode);
+        //println!("PC after: {}", c.PC);
+        assert!(c.PC == 6);
+    }
+
+    #[test]
+    fn test_4XNN() {
+        let mut c = Chip::new();
+        let opcode: u16 = 0x3340;
+        c.V[3] = 0x41;
+        c.PC = 4;
+        c.decode_4XNN(opcode);
+        //println!("PC after: {}", c.PC);
+        assert!(c.PC == 6);
+    }
+
+    #[test]
+    fn test_8XY5() {
+        let mut c = Chip::new();
+        let opcode: u16 = 0x3340;
+        c.V[3] = 200;
+        c.V[4] = 150;
+        c.decode_8XY5(opcode);
+        assert!(c.V[0xf] == 1);
     }
 
     fn print_buf(buf: &[[u8; SCREEN_COLUMNS]; SCREEN_ROWS]) {

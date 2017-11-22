@@ -66,7 +66,7 @@ fn main() {
         }
 
         let mut s = String::new();
-        io::stdin().read_line(&mut s);
+        //io::stdin().read_line(&mut s);
 
         let ticks = (Instant::now().elapsed().as_secs() % 16) as u8;
         let temp_del = chip.delay_timer as i16;

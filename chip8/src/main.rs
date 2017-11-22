@@ -10,6 +10,8 @@ use std::env;
 use std::fs::File;
 use std::fs;
 use std::io::Read;
+use std::io;
+use std::time::{Duration, Instant};
 
 use chip::Chip;
 use utils::*;
@@ -40,19 +42,16 @@ fn main() {
         Style::CLOSE,
         &Default::default(),
     );
-    
+
 
     let mut rect = RectangleShape::new();
     rect.set_size((SCALE as f32, SCALE as f32));
     rect.set_fill_color(&Color::WHITE);
 
-    let mut clock: Clock = Clock::start();
-    let mut current_time: Time;
-    while window.is_open() {
-        while clock.elapsed_time().as_seconds() < (1 / 60) as f32 {}
-        current_time = clock.restart();
+    let mut last_instruction = Instant::now();
 
-        read_keys(&mut chip, &window);
+    while window.is_open() {
+
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => return,
@@ -61,9 +60,15 @@ fn main() {
             }
         }
 
-        chip.emulate_cycle();
+        if Instant::now() - last_instruction > Duration::from_millis(2) {
+            chip.emulate_cycle();
+            last_instruction = Instant::now();
+        }
 
-        let ticks = (current_time.as_milliseconds() % 16) as u8;
+        let mut s = String::new();
+        io::stdin().read_line(&mut s);
+
+        let ticks = (Instant::now().elapsed().as_secs() % 16) as u8;
         let temp_del = chip.delay_timer as i16;
         let temp_sound = chip.sound_timer as i16;
         let delay_val = (temp_del - ticks as i16) as i16;
@@ -86,26 +91,30 @@ fn main() {
                 window.display();
             }
         }
+        read_keys(&mut chip, &window);
     }
 }
 
 fn read_keys(chip: &mut Chip, window: &RenderWindow) {
-    chip.key[0] = Key::Num1.is_pressed();
-    chip.key[1] = Key::Num2.is_pressed();
-    chip.key[2] = Key::Num3.is_pressed();
-    chip.key[3] = Key::Num4.is_pressed();
-    chip.key[4] = Key::Q.is_pressed();
-    chip.key[5] = Key::W.is_pressed();
-    chip.key[6] = Key::E.is_pressed();
-    chip.key[7] = Key::R.is_pressed();
-    chip.key[8] = Key::A.is_pressed();
-    chip.key[9] = Key::S.is_pressed();
-    chip.key[10] = Key::D.is_pressed();
-    chip.key[11] = Key::F.is_pressed();
-    chip.key[12] = Key::Z.is_pressed();
-    chip.key[13] = Key::X.is_pressed();
-    chip.key[14] = Key::C.is_pressed();
-    chip.key[15] = Key::V.is_pressed();
+    chip.key[0x0] = Key::X.is_pressed();
+    chip.key[0x1] = Key::Num1.is_pressed();
+    chip.key[0x2] = Key::Num2.is_pressed();
+    chip.key[0x3] = Key::Num3.is_pressed();
+
+    chip.key[0x4] = Key::Q.is_pressed();
+    chip.key[0x5] = Key::W.is_pressed();
+    chip.key[0x6] = Key::E.is_pressed();
+    chip.key[0x7] = Key::A.is_pressed();
+
+    chip.key[0x8] = Key::S.is_pressed();
+    chip.key[0x9] = Key::D.is_pressed();
+    chip.key[0xa] = Key::Z.is_pressed();
+    chip.key[0xb] = Key::C.is_pressed();
+
+    chip.key[0xc] = Key::Num4.is_pressed();
+    chip.key[0xd] = Key::R.is_pressed();
+    chip.key[0xe] = Key::F.is_pressed();
+    chip.key[0xf] = Key::V.is_pressed();
 }
 
 fn load_rom(filename: String, chip: &mut Chip) {

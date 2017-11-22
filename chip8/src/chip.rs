@@ -8,7 +8,7 @@ use utils::*;
 
 
 pub struct Chip {
-    pub I: u16,
+    pub I: usize,
     pub mem: Ram,
     pub V: [u8; 16],
     pub PC: usize,
@@ -52,6 +52,7 @@ impl Chip {
     pub fn emulate_cycle(&mut self) {
         let opcode = self.fetch();
         self.execute(opcode);
+        self.debug_print(opcode);
     }
 
     fn execute(&mut self, opcode: u16) {
@@ -119,11 +120,7 @@ impl Chip {
     }
 
     fn decode_00E0(&mut self, opcode: u16) {
-        for i in 0..(SCREEN_ROWS - 1) {
-            for j in 0..(SCREEN_COLUMNS - 1) {
-                self.vid_mem[i][j] = 0;
-            }
-        }
+        self.vid_mem = [[0; SCREEN_COLUMNS]; SCREEN_ROWS];
         self.draw = true; //is this right?
     }
 
@@ -197,7 +194,7 @@ impl Chip {
         let x = self.V[get_X(opcode) as usize] as u8;
         let y = self.V[get_Y(opcode) as usize] as u8;
 
-        if x > y {
+        if x < y {
             self.V[0xf] = 0;
         } else {
             self.V[0xf] = 1;
@@ -228,7 +225,8 @@ impl Chip {
 
     fn decode_8XYE(&mut self, opcode: u16) {
         let msb = (self.read_reg(get_X(opcode) as u8) >> 7) & 1;
-        let mul = self.read_reg(get_X(opcode) as u8) * 2;
+        let mut mul = self.read_reg(get_X(opcode) as u8);
+        mul = mul.wrapping_mul(2);
         self.write_to_reg(get_X(opcode) as u8, mul);
     }
 
@@ -239,7 +237,7 @@ impl Chip {
     }
 
     fn decode_ANNN(&mut self, opcode: u16) {
-        self.I = get_NNN(opcode);
+        self.I = get_NNN(opcode) as usize;
     }
 
     fn decode_BNNN(&mut self, opcode: u16) {
@@ -263,7 +261,7 @@ impl Chip {
             pixel = self.mem.read((self.I as usize + row_off) as usize);
             pixel >>= 8;
             for col_off in 0..8 {
-                if pixel & (0x80 >> col_off) > 0 {
+                if (pixel & 0x80 >> col_off) > 0 {
                     if self.vid_mem[(row + row_off) % 32][(col + col_off) % 64] == 1 {
                         self.V[0xf] = 1;
                     }
@@ -322,12 +320,12 @@ impl Chip {
     }
 
     fn decode_FX1E(&mut self, opcode: u16) {
-        self.I = (self.I + self.V[get_X(opcode) as usize] as u16) & 0xfff;
+        self.I += self.V[get_X(opcode) as usize] as usize;
     }
 
     fn decode_FX29(&mut self, opcode: u16) {
         //might not be what the manual meant
-        self.I = self.mem.read(self.V[get_X(opcode) as usize] as usize);
+        self.I = self.mem.read(self.V[get_X(opcode) as usize] as usize) as usize;
     }
 
     fn decode_FX33(&mut self, opcode: u16) {
@@ -339,21 +337,21 @@ impl Chip {
 
     fn decode_FX55(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
-        for j in 0..last_reg {
+        for j in 0..last_reg + 1 {
             self.mem.write(
                 self.I as usize + j,
                 self.V[j as usize] as u8,
             );
-            self.I += 1;
         }
+        //self.I += last_reg as usize + 1;
     }
 
     fn decode_FX65(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
-        for j in 0..last_reg {
+        for j in 0..last_reg + 1 {
             self.V[j] = self.mem.read(self.I as usize + j) as u8;
-            self.I += 1;
         }
+        //self.I += last_reg as usize + 1;
     }
 
     fn write_to_reg(&mut self, i: u8, val: u8) {
@@ -366,6 +364,10 @@ impl Chip {
 
     fn unimplemented(&self, opcode: u16) {
         println!("Unimplemented opcode: {:#04X}", opcode);
+    }
+
+    pub fn debug_print(&self, opcode: u16) {
+        println!("Opcode: {:#04X} self.I: {:#04X}", opcode, self.I);
     }
 }
 
@@ -396,11 +398,11 @@ mod tests {
     fn test_FX0A() {
         let mut c = Chip::new();
         let opcode: u16 = 0xF30A;
-        c.key[5] = 1;
+        c.key[5] = true;
         c.PC = 2;
         c.decode_FX0A(opcode);
         assert!(c.PC == 2 as usize);
-        assert!(c.read_reg(get_X(opcode) as u8) == c.key[5]);
+        assert!(c.read_reg(get_X(opcode) as u8) == 5);
 
     }
 

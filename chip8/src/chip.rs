@@ -11,12 +11,12 @@ pub struct Chip {
     pub I: usize,
     pub mem: Ram,
     pub V: [u8; 16],
-    pub PC: usize,
-    pub SP: usize,
+    pub PC: u16,
+    pub SP: u8,
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub vid_mem: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS],
-    pub stack: Vec<u16>,
+    pub stack: [u16; 16],
     pub key: [bool; 16],
     pub draw: bool,
 }
@@ -32,7 +32,7 @@ impl Chip {
             delay_timer: 0,
             sound_timer: 0,
             vid_mem: [[0; SCREEN_COLUMNS]; SCREEN_ROWS],
-            stack: Vec::with_capacity(16),
+            stack: [0; 16],
             key: [false; 16],
             draw: false,
         };
@@ -44,7 +44,7 @@ impl Chip {
     }
 
     fn fetch(&mut self) -> u16 {
-        let opcode = self.mem.read(self.PC);
+        let opcode = self.mem.read(self.PC as usize);
         self.PC += 2;
         opcode
     }
@@ -121,28 +121,24 @@ impl Chip {
 
     fn decode_00E0(&mut self, opcode: u16) {
         self.vid_mem = [[0; SCREEN_COLUMNS]; SCREEN_ROWS];
-        self.draw = true; //is this right?
     }
 
     fn decode_00EE(&mut self, opcode: u16) {
-        self.PC = match self.stack.pop() {
-            Some(x) => x as usize,
-            None => self.PC,
-        };
+        self.PC = self.stack[self.SP as usize];
+        self.SP = self.SP.wrapping_sub(1);
     }
-    //JUMP to NNN
+
     fn decode_1NNN(&mut self, opcode: u16) {
-        self.PC = get_NNN(opcode) as usize;
+        self.PC = get_NNN(opcode);
     }
 
     fn decode_2NNN(&mut self, opcode: u16) {
-        self.stack.push(self.PC as u16);
-        self.PC = get_NNN(opcode) as usize;
-
+        self.SP = self.SP.wrapping_add(1);
+        self.stack[self.SP as usize] = self.PC;
+        self.PC = get_NNN(opcode);
     }
 
     fn decode_3XNN(&mut self, opcode: u16) {
-        println!("Inside 3XNN| VX = {}, NN = {}", self.V[get_X(opcode) as usize], get_NN(opcode)as u8);
         if self.V[get_X(opcode) as usize] == get_NN(opcode) as u8 {
             self.PC += 2;
         }
@@ -188,51 +184,31 @@ impl Chip {
     fn decode_8XY4(&mut self, opcode: u16) {
         let res = self.V[get_X(opcode) as usize] as u16 + self.V[get_Y(opcode) as usize] as u16;
         self.V[get_X(opcode) as usize] = res as u8;
-        self.V[0xf] = if res > 0x100 { 1 } else { 0 };
+        self.V[0xf] = if res > 0xff { 1 } else { 0 };
     }
 
     fn decode_8XY5(&mut self, opcode: u16) {
-        let x = self.V[get_X(opcode) as usize] as u8;
-        let y = self.V[get_Y(opcode) as usize] as u8;
-        
-        println!("VX = {}, VY = {}", x, y);
+        self.V[0xf] = (self.V[get_X(opcode) as usize] >= self.V[get_Y(opcode) as usize]) as u8;
 
-        if x > y {
-            self.V[0xf] = 1;
-        } else {
-            self.V[0xf] = 0;
-        }
-        
-        println!("VF = {}", self.read_reg(0xf));
-
-        self.V[get_X(opcode) as usize].wrapping_sub(self.V[get_Y(opcode) as usize]);
+        self.V[get_X(opcode) as usize] =
+            self.V[get_X(opcode) as usize].wrapping_sub(self.V[get_Y(opcode) as usize]);
     }
 
     fn decode_8XY6(&mut self, opcode: u16) {
-        let lsb = self.V[get_X(opcode) as usize] & 1;
-        let res = self.V[get_X(opcode) as usize] >> 1;
-        self.V[get_X(opcode) as usize] = res;
-        self.V[get_Y(opcode) as usize] = res;
-        self.V[0xf] = lsb;
+        self.V[0xf] = self.V[get_Y(opcode) as usize] & 1;
+        self.V[get_X(opcode) as usize] = self.V[get_Y(opcode) as usize] >> 1;
     }
 
     fn decode_8XY7(&mut self, opcode: u16) {
-        let vx = self.read_reg(get_X(opcode) as u8);
-        let vy = self.read_reg(get_Y(opcode) as u8);
+        self.V[0xf] = (self.V[get_X(opcode) as usize] <= self.V[get_Y(opcode) as usize]) as u8;
 
-        if vy > vx {
-            self.write_to_reg(0xf, 0x1);
-        } else {
-            self.write_to_reg(0xf, 0x0);
-        }
-        self.write_to_reg(get_X(opcode) as u8, vy.wrapping_sub(vx));
+        self.V[get_X(opcode) as usize] =
+            self.V[get_X(opcode) as usize].wrapping_sub(self.V[get_Y(opcode) as usize]);
     }
 
     fn decode_8XYE(&mut self, opcode: u16) {
-        let msb = (self.read_reg(get_X(opcode) as u8) >> 7) & 1;
-        let mut mul = self.read_reg(get_X(opcode) as u8);
-        mul = mul.wrapping_mul(2);
-        self.write_to_reg(get_X(opcode) as u8, mul);
+        self.V[0xf] = self.read_reg(get_X(opcode) as u8) >> 7;
+        self.V[get_X(opcode) as usize] = self.V[get_Y(opcode) as usize] << 1;
     }
 
     fn decode_9XY0(&mut self, opcode: u16) {
@@ -246,8 +222,7 @@ impl Chip {
     }
 
     fn decode_BNNN(&mut self, opcode: u16) {
-        let val = (self.V[0] as u16 + get_NNN(opcode)) & 0xfff;
-        self.PC = val as usize;
+        self.PC = get_NNN(opcode) + self.V[0x0] as u16;
     }
 
     fn decode_CXNN(&mut self, opcode: u16) {
@@ -274,38 +249,29 @@ impl Chip {
                 }
             }
         }
-        self.draw = true;
     }
 
     fn decode_EX9E(&mut self, opcode: u16) {
-        //skip next instruction if key with value of VX is pressed
         if self.key[self.V[get_X(opcode) as usize] as usize] == true {
             self.PC += 2;
         }
     }
 
     fn decode_EXA1(&mut self, opcode: u16) {
-        //skip next instruction if key with value of VX is NOT pressed
         if self.key[self.V[get_X(opcode) as usize] as usize] == false {
             self.PC += 2;
         }
     }
 
     fn decode_FX07(&mut self, opcode: u16) {
-        //The value of delay timer is placed in VX
         self.V[get_X(opcode) as usize] = self.delay_timer;
     }
 
-    //test fails
     fn decode_FX0A(&mut self, opcode: u16) {
-        //wait for a keypress, store the value of the key in VX
-        //all execution stops until a key is pressed
-
         let mut pressed = false;
 
         for i in 0..self.key.len() {
             if self.key[i] == true {
-                print!("Inne");
                 &mut self.write_to_reg(get_X(opcode) as u8, i as u8);
                 pressed = true;
             }
@@ -336,27 +302,24 @@ impl Chip {
     fn decode_FX33(&mut self, opcode: u16) {
         let mut bcd: u8 = self.V[get_X(opcode) as usize] as u8;
         self.mem.write(self.I as usize + 0, bcd / 100);
-        self.mem.write(self.I as usize + 1, (bcd / 10) % 10);
+        self.mem.write(self.I as usize + 1, (bcd % 100) / 10);
         self.mem.write(self.I as usize + 2, bcd % 10);
     }
 
     fn decode_FX55(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg + 1 {
-            self.mem.write(
-                self.I as usize + j,
-                self.V[j as usize] as u8,
-            );
+            self.mem.mem[self.I] = self.V[j];
+            self.I += 1;
         }
-        //self.I += last_reg as usize + 1;
     }
 
     fn decode_FX65(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg + 1 {
-            self.V[j] = self.mem.read(self.I as usize + j) as u8;
+            self.V[j] = self.mem.mem[self.I];
+            self.I += 1;
         }
-        //self.I += last_reg as usize + 1;
     }
 
     fn write_to_reg(&mut self, i: u8, val: u8) {
@@ -381,7 +344,7 @@ mod tests {
     use utils::{SCREEN_COLUMNS, SCREEN_ROWS};
     use chip::*;
     #[test]
-    fn frame_buf() {
+    fn test_DXYN() {
         let frm_buf: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS] = [[0; SCREEN_COLUMNS]; SCREEN_ROWS];
 
         let mut c = Chip::new();

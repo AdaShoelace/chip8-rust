@@ -1,7 +1,0 @@
-[package]
-name = "chip8-disassembler"
-version = "0.1.0"
-authors = ["PierreLeidbring <pierre.leidbring@gmail.com>"]
-
-[dependencies]
-byteorder = "1"

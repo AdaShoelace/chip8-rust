@@ -49,6 +49,8 @@ fn main() {
     rect.set_fill_color(&Color::WHITE);
 
     let mut last_instruction = Instant::now();
+    let mut last_screen = Instant::now();
+    let mut delay_duration = Instant::now();
 
     while window.is_open() {
 
@@ -66,18 +68,17 @@ fn main() {
         }
 
         let mut s = String::new();
-        //io::stdin().read_line(&mut s);
 
-        let ticks = (Instant::now().elapsed().as_secs() % 16) as u8;
-        let temp_del = chip.delay_timer as i16;
-        let temp_sound = chip.sound_timer as i16;
-        let delay_val = (temp_del - ticks as i16) as i16;
-        let sound_val = (temp_sound - ticks as i16) as i16;
-        chip.delay_timer = if delay_val > 0 { delay_val } else { 0 } as u8;
-        chip.delay_timer = if sound_val > 0 { sound_val } else { 0 } as u8;
+        if Instant::now() - delay_duration > Duration::from_millis(1/60) {
+            if chip.delay_timer > 0 {
+                chip.delay_timer -= 1; 
+            }
+            if chip.sound_timer > 0 {
+                chip.sound_timer -= 1; 
+            }
+        }
 
-        if chip.draw {
-            chip.draw = false;
+        if Instant::now() - last_screen > Duration::from_millis(10) {
             window.clear(&Color::BLACK);
             for x in 0..SCREEN_COLUMNS {
                 for y in 0..SCREEN_ROWS {
@@ -88,8 +89,9 @@ fn main() {
                         window.draw(&rect);
                     }
                 }
-                window.display();
             }
+            window.display();
+            last_screen = Instant::now();
         }
         read_keys(&mut chip, &window);
     }

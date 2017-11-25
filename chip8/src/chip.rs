@@ -296,7 +296,7 @@ impl Chip {
 
     fn decode_FX29(&mut self, opcode: u16) {
         //might not be what the manual meant
-        self.I = self.mem.read(self.V[get_X(opcode) as usize] as usize) as usize;
+        self.I = self.V[get_X(opcode) as usize]  as usize * 5;
     }
 
     fn decode_FX33(&mut self, opcode: u16) {
@@ -309,17 +309,17 @@ impl Chip {
     fn decode_FX55(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg + 1 {
-            self.mem.mem[self.I] = self.V[j];
-            self.I += 1;
+            self.mem.mem[self.I + j] = self.V[j];
         }
+            self.I + last_reg + 1;
     }
 
     fn decode_FX65(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg + 1 {
-            self.V[j] = self.mem.mem[self.I];
-            self.I += 1;
+            self.V[j] = self.mem.mem[self.I + j];
         }
+            self.I + last_reg + 1;
     }
 
     fn write_to_reg(&mut self, i: u8, val: u8) {

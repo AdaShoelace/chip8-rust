@@ -83,8 +83,8 @@ impl Ram {
     }
 
     pub fn read(&self, addr: usize) -> u16 {
-        let mut ret: u16 = self.mem[addr % 4096] as u16;
-        ret = (ret << 8) | self.mem[(addr %4096) + 1] as u16;
+        let mut ret: u16 = self.mem[addr] as u16;
+        ret = (ret << 8) | self.mem[addr + 1] as u16;
         ret as u16
     }
 

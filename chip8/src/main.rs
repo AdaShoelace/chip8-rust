@@ -69,13 +69,14 @@ fn main() {
 
         let mut s = String::new();
 
-        if Instant::now() - delay_duration > Duration::from_millis(1/60) {
+        if Instant::now() - delay_duration > Duration::from_millis(1000/60) {
             if chip.delay_timer > 0 {
                 chip.delay_timer -= 1; 
             }
             if chip.sound_timer > 0 {
                 chip.sound_timer -= 1; 
             }
+            delay_duration = Instant::now();
         }
 
         if Instant::now() - last_screen > Duration::from_millis(10) {

@@ -311,7 +311,7 @@ impl Chip {
         for j in 0..last_reg + 1 {
             self.mem.mem[self.I + j] = self.V[j];
         }
-            self.I + last_reg + 1;
+            self.I += last_reg + 1;
     }
 
     fn decode_FX65(&mut self, opcode: u16) {
@@ -319,7 +319,7 @@ impl Chip {
         for j in 0..last_reg + 1 {
             self.V[j] = self.mem.mem[self.I + j];
         }
-            self.I + last_reg + 1;
+            self.I += last_reg + 1;
     }
 
     fn write_to_reg(&mut self, i: u8, val: u8) {

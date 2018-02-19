@@ -27,6 +27,7 @@ const PIXEL: u32 = 20;
 
 fn main() {
     let arg1: String = env::args().nth(1).expect("No arguments given!");
+    let debug: String = env::args().nth(2); 
 
     let mut chip = Chip::new();
     load_rom(arg1, &mut chip);
@@ -62,14 +63,14 @@ fn main() {
             }
         }
 
-        if Instant::now() - last_instruction > Duration::from_millis(2) {
+        if Instant::now() - last_instruction > Duration::from_millis(1/60) {
             chip.emulate_cycle();
             last_instruction = Instant::now();
         }
 
         let mut s = String::new();
 
-        if Instant::now() - delay_duration > Duration::from_millis(1000/60) {
+        if Instant::now() - delay_duration > Duration::from_millis(1/60) {
             if chip.delay_timer > 0 {
                 chip.delay_timer -= 1; 
             }

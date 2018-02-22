@@ -226,8 +226,8 @@ impl Chip {
     }
 
     fn decode_CXNN(&mut self, opcode: u16) {
-        let mut rng = thread_rng();
-        self.V[get_X(opcode) as usize] = rng.next_u32() as u8 & get_NN(opcode) as u8;
+        let mut rng = thread_rng().gen::<u32>();
+        self.V[get_X(opcode) as usize] = rng as u8 & get_NN(opcode) as u8;
     }
 
     pub fn decode_DXYN(&mut self, opcode: u16) {

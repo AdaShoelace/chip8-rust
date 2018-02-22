@@ -14,7 +14,7 @@ use std::io;
 use std::time::{Duration, Instant};
 
 use chip::Chip;
-use utils::*;
+use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
 
 use sfml::window::{VideoMode, ContextSettings, Event, Key, Style};
 use sfml::system::{Time, Clock, Vector2f};
@@ -27,6 +27,24 @@ const PIXEL: u32 = 20;
 
 fn main() {
     let arg1: String = env::args().nth(1).expect("No arguments given!");
+    let mut step: bool = true;
+    let mut dbg_mode: bool = false;
+
+    match env::args().nth(2) {
+        Some(debug) => {
+            match debug.as_str() {
+                "-DBG" => {
+                    dbg_mode = true;
+                    step = false;
+                }
+                _ => {
+                    println!("Invalid argument: {}", debug);
+                    panic!();
+                }
+            }
+        }
+        None => (),
+    }
 
     let mut chip = Chip::new();
     load_rom(arg1, &mut chip);
@@ -58,23 +76,29 @@ fn main() {
             match event {
                 Event::Closed => return,
                 Event::KeyPressed { code: Key::Escape, .. } => return,
+                Event::KeyPressed { code: Key::F5, .. } => step = true,
                 _ => {}
             }
         }
 
         if Instant::now() - last_instruction > Duration::from_millis(2) {
-            chip.emulate_cycle();
+            if step {
+                chip.emulate_cycle();
+                if dbg_mode {
+                    step = false;
+                }
+            }
             last_instruction = Instant::now();
         }
 
         let mut s = String::new();
 
-        if Instant::now() - delay_duration > Duration::from_millis(1000/60) {
+        if Instant::now() - delay_duration > Duration::from_millis(16) {
             if chip.delay_timer > 0 {
-                chip.delay_timer -= 1; 
+                chip.delay_timer -= 1;
             }
             if chip.sound_timer > 0 {
-                chip.sound_timer -= 1; 
+                chip.sound_timer -= 1;
             }
             delay_duration = Instant::now();
         }

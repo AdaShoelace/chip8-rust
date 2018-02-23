@@ -5,6 +5,7 @@ extern crate rand;
 mod chip;
 mod ram;
 mod utils;
+mod debugger;
 
 use std::env;
 use std::fs::File;
@@ -12,14 +13,16 @@ use std::fs;
 use std::io::Read;
 use std::io;
 use std::time::{Duration, Instant};
+use std::thread;
 
 use chip::Chip;
 use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
+use debugger::Debugger; 
 
 use sfml::window::{VideoMode, ContextSettings, Event, Key, Style};
 use sfml::system::{Time, Clock, Vector2f};
 use sfml::graphics::{RenderTarget, RectangleShape, Transformable, Drawable, RenderWindow, Shape,
-                     Color};
+Color};
 
 const SCREEN_WIDTH: u32 = 64;
 const SCREEN_HEIGHT: u32 = 32;
@@ -29,6 +32,13 @@ fn main() {
     let arg1: String = env::args().nth(1).expect("No arguments given!");
     let mut step: bool = true;
     let mut dbg_mode: bool = false;
+    let mut debug_window = RenderWindow::new(
+        (200, 400),
+        "Debug window",
+        Style::CLOSE,
+        &Default::default(),
+        );
+
 
     match env::args().nth(2) {
         Some(debug) => {
@@ -36,7 +46,9 @@ fn main() {
                 "-DBG" => {
                     dbg_mode = true;
                     step = false;
-                }
+                    let debugger = Debugger::new();
+                    thread::spawn(move || &mut debugger.run());
+                },
                 _ => {
                     println!("Invalid argument: {}", debug);
                     panic!();
@@ -59,7 +71,7 @@ fn main() {
         "Chip8 Emulator",
         Style::CLOSE,
         &Default::default(),
-    );
+        );
 
 
     let mut rect = RectangleShape::new();
@@ -75,7 +87,10 @@ fn main() {
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => return,
-                Event::KeyPressed { code: Key::Escape, .. } => return,
+                Event::KeyPressed { code: Key::Escape, .. } => {
+                    debug_window.close();
+                    return
+                },
                 Event::KeyPressed { code: Key::F5, .. } => step = true,
                 _ => {}
             }

@@ -17,7 +17,6 @@ use std::thread;
 
 use chip::Chip;
 use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
-use debugger::Debugger; 
 
 use sfml::window::{VideoMode, ContextSettings, Event, Key, Style};
 use sfml::system::{Time, Clock, Vector2f};
@@ -33,7 +32,7 @@ fn main() {
     let mut step: bool = true;
     let mut dbg_mode: bool = false;
     let mut debug_window = RenderWindow::new(
-        (200, 400),
+        (600, 400),
         "Debug window",
         Style::CLOSE,
         &Default::default(),
@@ -46,8 +45,6 @@ fn main() {
                 "-DBG" => {
                     dbg_mode = true;
                     step = false;
-                    let debugger = Debugger::new();
-                    thread::spawn(move || &mut debugger.run());
                 },
                 _ => {
                     println!("Invalid argument: {}", debug);
@@ -88,7 +85,6 @@ fn main() {
             match event {
                 Event::Closed => return,
                 Event::KeyPressed { code: Key::Escape, .. } => {
-                    debug_window.close();
                     return
                 },
                 Event::KeyPressed { code: Key::F5, .. } => step = true,
@@ -131,11 +127,17 @@ fn main() {
                 }
             }
             window.display();
+            if dbg_mode {
+
+                debug_window.clear(&Color::BLACK);
+                debug_window.display();
+            }
             last_screen = Instant::now();
         }
         read_keys(&mut chip, &window);
     }
 }
+
 
 fn read_keys(chip: &mut Chip, window: &RenderWindow) {
     chip.key[0x0] = Key::X.is_pressed();

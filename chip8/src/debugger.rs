@@ -1,46 +1,55 @@
+#![allow(dead_code, unused)]
 use sfml::window::*;
+use sfml::system::*;
 use sfml::graphics::*;
 
-const TEXT_DISTANCE_X: usize = 10;
-const TEXT_DISTANCE_Y: usize = 14;
+use std::fmt::*;
+
+struct TextObject (String, String);
+
+impl TextObject {
+    fn new(first: &str, second: u32) -> TextObject {
+        TextObject(String::from(first), format!("{:X}", second))
+    }
+}
 
 pub struct Debugger {
     window: RenderWindow,
     font: Font,
-    reg_vec: String,
+    register_arr: Vec<TextObject>,
+    pc: TextObject,
+    I: TextObject,
 }
 
 impl Debugger {
-    pub fn run(&mut self) {
-        while self.window.is_open() {
-            self.print();
-            self.window.clear(&Color::BLACK);
-            self.window.display();   
-        } 
-    }
 
-    pub fn new() -> Debugger {
-        let ret = Debugger {
+    pub fn new() -> Self {
+        Debugger {
             window: RenderWindow::new(
-                        (200, 400),
+                        (600, 400),
                         "Debug window",
                         Style::CLOSE,
                         &Default::default(),
                         ),
             font: Font::from_file("../resources/SpaceMono-Regular.ttf").unwrap(),
-            reg_vec: String::from("Register: "),
-        }; 
+            register_arr: Self::init_reg(),
+            pc: TextObject::new("PC", 0),
+            I: TextObject::new("I", 0)
+        }
+    }
+    
+    pub fn update(&mut self) {
+    }
+    
+    fn init_reg() -> Vec<TextObject> {
+        let mut ret = Vec::<TextObject>::new();
+        for i in 0..16 {
+            ret.push(TextObject::new("V", i as u32));
+        }
         ret
     }
 
-   
-    fn print(&mut self) {
-        let mut output = self.reg_vec.clone();
-        output.push_str("Test");
-        let t = Text::new(output.as_str(), &self.font, 12);
-        for i in 0..self.reg_vec.len() {
-            self.window.draw(&t);
-        }
+    fn print_reg(&self) {
+         
     }
-
 }

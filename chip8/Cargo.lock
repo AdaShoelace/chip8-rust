@@ -12,6 +12,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "chip8"
 version = "0.1.0"
 dependencies = [
+ "nfd 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "sfml 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -69,9 +70,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "gcc"
+version = "0.3.54"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "libc"
 version = "0.2.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "nfd"
+version = "0.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "gcc 0.3.54 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "rand"
@@ -108,7 +122,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum csfml-window-sys 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "86fd0d9840a9f92ae0960cef634c1b5781b15847dbb099a9ee6021bb5c1cb618"
 "checksum fuchsia-zircon 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f6c0581a4e363262e52b87f59ee2afe3415361c6ec35e665924eb08afe8ff159"
 "checksum fuchsia-zircon-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "43f3795b4bae048dc6123a6b972cadde2e676f9ded08aef6bb77f5f157684a82"
+"checksum gcc 0.3.54 (registry+https://github.com/rust-lang/crates.io-index)" = "5e33ec290da0d127825013597dbdfc28bee4964690c7ce1166cbc2a7bd08b1bb"
 "checksum libc 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)" = "5ba3df4dcb460b9dfbd070d41c94c19209620c191b0340b929ce748a2bcd42d2"
+"checksum nfd 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "8e752e3c216bc8a491c5b59fa46da10f1379ae450b19ac688e07f4bb55042e98"
 "checksum rand 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)" = "61efcbcd9fa8d8fbb07c84e34a8af18a1ff177b449689ad38a6e9457ecc7b2ae"
 "checksum sfml 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)" = "47b06f9db4d3f8b936d232d92bfbd6335060ae51ddcf1be2e79361aeb5c8fef1"
 "checksum sfml-build 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ff35ae173aff95bc967d1b4f0e131a8aec384c317fd057738da4b0f71c8cf841"

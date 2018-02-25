@@ -1,6 +1,7 @@
 #![allow(dead_code, unused)]
 extern crate sfml;
 extern crate rand;
+extern crate nfd;
 
 mod chip;
 mod ram;
@@ -23,12 +24,25 @@ use sfml::system::{Time, Clock, Vector2f};
 use sfml::graphics::{RenderTarget, RectangleShape, Transformable, Drawable, RenderWindow, Shape,
 Color};
 
+use nfd::Response;
+
 const SCREEN_WIDTH: u32 = 64;
 const SCREEN_HEIGHT: u32 = 32;
 const PIXEL: u32 = 20;
 
 fn main() {
-    let arg1: String = env::args().nth(1).expect("No arguments given!");
+    //let arg1: String = env::args().nth(1).expect("No arguments given!");
+    let mut arg1 = String::from("asdfg");
+    let file_result = nfd::open_file_dialog(None, None).unwrap_or_else(|e| {
+        panic!(e); 
+    });
+
+    match file_result {
+        Response::Okay(file_path) => arg1 = file_path,
+        Response::OkayMultiple(files) => println!("Choose one file only!"),
+        _ => panic!(),
+    }
+
     let mut step: bool = true;
     let mut dbg_mode: bool = false;
     let mut debug_window = RenderWindow::new(

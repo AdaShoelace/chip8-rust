@@ -6,4 +6,5 @@ authors = ["Pierre Leidbring <pierre.leidbring@gmail.com>"]
 [dependencies]
 rand = "0.3.15"
 sfml = "0.14.0"
+nfd = "0.0.4"
 

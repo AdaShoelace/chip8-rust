@@ -2,11 +2,16 @@
 extern crate sfml;
 extern crate rand;
 extern crate nfd;
+extern crate getopts;
 
 mod chip;
 mod ram;
 mod utils;
 mod debugger;
+
+use debugger::Debugger;
+use std::path::Path;
+use getopts::{Options, Matches};
 
 use std::env;
 use std::fs::File;
@@ -15,6 +20,7 @@ use std::io::Read;
 use std::io;
 use std::time::{Duration, Instant};
 use std::thread;
+use std::u16;
 
 use chip::Chip;
 use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
@@ -31,48 +37,53 @@ const SCREEN_HEIGHT: u32 = 32;
 const PIXEL: u32 = 20;
 
 fn main() {
-    //let arg1: String = env::args().nth(1).expect("No arguments given!");
-    let mut arg1 = String::from("asdfg");
-    let file_result = nfd::open_file_dialog(None, None).unwrap_or_else(|e| {
-        panic!(e); 
-    });
+    let args: Vec<String> = env::args().collect();
+    let mut opts = Options::new();
+    opts.optopt("r", "rom", "path to rom", "NAME");
+    opts.optopt("b", "break-point", "adress to break on (in hexadecimal)", "ADRESS");
+    opts.optflag("d", "debug", "run in debug mode");
+    opts.optflag("h", "help", "print this help menu");
 
-    match file_result {
-        Response::Okay(file_path) => arg1 = file_path,
-        Response::OkayMultiple(files) => println!("Choose one file only!"),
-        _ => panic!(),
+    let program = args[0].clone();
+
+    let matches: Matches = match opts.parse(&args[1..]) {
+        Ok(m) => { m },
+        Err(f) => { panic!(f.to_string()) }
+    };
+
+    if matches.opt_present("h") {
+        print_usage(&program, opts);
+        return;
     }
 
     let mut step: bool = true;
-    let mut dbg_mode: bool = false;
-    let mut debug_window = RenderWindow::new(
-        (600, 400),
-        "Debug window",
-        Style::CLOSE,
-        &Default::default(),
-        );
+    let mut debugger: Option<Debugger> = None;
 
-
-    match env::args().nth(2) {
-        Some(debug) => {
-            match debug.as_str() {
-                "-DBG" => {
-                    dbg_mode = true;
-                    step = false;
-                },
-                _ => {
-                    println!("Invalid argument: {}", debug);
-                    panic!();
-                }
-            }
-        }
-        None => (),
+    if matches.opt_present("d") {
+        //step = false;
+        debugger = Some(Debugger::new());
     }
 
+    let rom: String = if !matches.opt_strs("r").is_empty() { matches.opt_strs("r")[0].clone() } else {
+        let file_result = nfd::open_file_dialog(Some("ch8"), env::current_dir().unwrap().as_path().to_str()).unwrap_or_else(|e| {
+            panic!(e);
+        });
+
+        match file_result {
+            Response::Okay(file_path) => file_path,
+            Response::OkayMultiple(files) => {
+                println!("Choose one file only");
+                panic!();
+            },
+            _ => panic!(),
+        }
+    };
+
+    let break_point: Option<String> = if matches.opt_defined("b") { Some(matches.opt_strs("b")[0].clone()) } else { None };
+
     let mut chip = Chip::new();
-    load_rom(arg1, &mut chip);
-    chip.print_mem(true);
-    //chip.print_mem();
+    load_rom(rom, &mut chip);
+    //chip.print_mem(true);
 
     //Window etc
     let width = (SCREEN_COLUMNS * SCALE) as u32;
@@ -103,20 +114,32 @@ fn main() {
                 },
                 Event::KeyPressed { code: Key::F5, .. } => step = true,
                 _ => {}
-            }
+            };
         }
+
 
         if Instant::now() - last_instruction > Duration::from_millis(2) {
             if step {
                 chip.emulate_cycle();
-                if dbg_mode {
-                    step = false;
+                match debugger {
+                    Some(ref mut ok) => {
+                        ok.update(chip.clone());
+                        //step = false;
+                        match break_point {
+                            Some(ref addr) => {
+                                if chip.PC == u16::from_str_radix(addr.as_str(), 16).unwrap() as u16 {
+                                    println!("PC: {} break_point: {}", &chip.PC, i64::from_str_radix(addr.as_str(), 16).unwrap() as u16);
+                                    step = false;
+                                }
+                            },
+                            None => {}
+                        };
+                    },
+                    None => {}
                 }
             }
             last_instruction = Instant::now();
         }
-
-        let mut s = String::new();
 
         if Instant::now() - delay_duration > Duration::from_millis(16) {
             if chip.delay_timer > 0 {
@@ -141,11 +164,6 @@ fn main() {
                 }
             }
             window.display();
-            if dbg_mode {
-
-                debug_window.clear(&Color::BLACK);
-                debug_window.display();
-            }
             last_screen = Instant::now();
         }
         read_keys(&mut chip, &window);
@@ -176,7 +194,10 @@ fn read_keys(chip: &mut Chip, window: &RenderWindow) {
 }
 
 fn load_rom(filename: String, chip: &mut Chip) {
-    let mut f = File::open(&filename).unwrap();
+    let mut f = File::open(&filename).unwrap_or_else(|e| {
+        println!("Filename: {}", filename);
+        panic!(e);
+    });
     let meta = fs::metadata(filename).unwrap();
     let file_length = meta.len();
     let mut buf: Vec<u8> = Vec::with_capacity(file_length as usize);
@@ -187,4 +208,9 @@ fn load_rom(filename: String, chip: &mut Chip) {
         println!("{:#04X}", buf[i]);
     }
     chip.mem.write_rom(&buf);
+}
+
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} FILE [options]", program);
+    print!("{}", opts.usage(&brief));
 }

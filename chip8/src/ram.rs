@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_variables)]
 pub const MEM_START: u16 = 0x200;
 
+#[derive(Clone)]
 pub struct Ram {
     pub mem: [u8; 4096],
 }

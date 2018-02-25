@@ -5,8 +5,7 @@ use rand::thread_rng;
 use ram::Ram;
 use utils::*;
 
-
-
+#[derive(Clone)]
 pub struct Chip {
     pub I: usize,
     pub mem: Ram,
@@ -23,7 +22,7 @@ pub struct Chip {
 
 impl Chip {
     pub fn new() -> Chip {
-        let chip = Chip {
+        Chip {
             I: 0,
             mem: Ram::new(),
             V: [0; 16],
@@ -35,8 +34,7 @@ impl Chip {
             stack: [0; 16],
             key: [false; 16],
             draw: false,
-        };
-        chip
+        }
     }
 
     pub fn print_mem(&self, all: bool) {
@@ -52,7 +50,6 @@ impl Chip {
     pub fn emulate_cycle(&mut self) {
         let opcode = self.fetch();
         self.execute(opcode);
-        self.debug_print(opcode);
     }
 
     fn execute(&mut self, opcode: u16) {

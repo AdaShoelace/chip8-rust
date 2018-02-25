@@ -1,9 +1,13 @@
 #![allow(dead_code, unused)]
+
+use chip::*;
+
 use sfml::window::*;
 use sfml::system::*;
 use sfml::graphics::*;
 
 use std::fmt::*;
+use std::env;
 
 struct TextObject (String, String);
 
@@ -24,6 +28,8 @@ pub struct Debugger {
 impl Debugger {
 
     pub fn new() -> Self {
+        let mut current_path = env::current_dir().unwrap();
+        current_path.push("resources/SpaceMono-Regular.ttf");
         Debugger {
             window: RenderWindow::new(
                         (600, 400),
@@ -31,16 +37,22 @@ impl Debugger {
                         Style::CLOSE,
                         &Default::default(),
                         ),
-            font: Font::from_file("../resources/SpaceMono-Regular.ttf").unwrap(),
-            register_arr: Self::init_reg(),
-            pc: TextObject::new("PC", 0),
-            I: TextObject::new("I", 0)
+                        font: Font::from_file(current_path.as_path().to_str().unwrap()).unwrap(),
+                        register_arr: Self::init_reg(),
+                        pc: TextObject::new("PC", 0),
+                        I: TextObject::new("I", 0)
         }
     }
-    
-    pub fn update(&mut self) {
+
+    pub fn update(&mut self, chip: Chip) {
+        let mut t = Text::new("test", &self.font, 12);
+        t.set_position((0f32, 0f32));
+        t.set_fill_color(&Color::WHITE);
+        self.window.clear(&Color::BLACK);
+        self.window.draw(&t);
+        self.window.display();
     }
-    
+
     fn init_reg() -> Vec<TextObject> {
         let mut ret = Vec::<TextObject>::new();
         for i in 0..16 {
@@ -50,6 +62,6 @@ impl Debugger {
     }
 
     fn print_reg(&self) {
-         
+
     }
 }

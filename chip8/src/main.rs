@@ -127,7 +127,7 @@ fn main() {
                         //step = false;
                         match break_point {
                             Some(ref addr) => {
-                                if chip.PC == u16::from_str_radix(addr.as_str(), 16).unwrap() as u16 {
+                                if chip.PC == u16::from_str_radix(addr.as_str(), 16).unwrap() + 0x200 {
                                     println!("PC: {} break_point: {}", &chip.PC, i64::from_str_radix(addr.as_str(), 16).unwrap() as u16);
                                     step = false;
                                 }
@@ -202,11 +202,6 @@ fn load_rom(filename: String, chip: &mut Chip) {
     let file_length = meta.len();
     let mut buf: Vec<u8> = Vec::with_capacity(file_length as usize);
     f.read_to_end(&mut buf).expect("File not found");
-
-    println!("Debug print of buffer:");
-    for i in 0..10 {
-        println!("{:#04X}", buf[i]);
-    }
     chip.mem.write_rom(&buf);
 }
 

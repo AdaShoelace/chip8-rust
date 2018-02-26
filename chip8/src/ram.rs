@@ -69,18 +69,6 @@ impl Ram {
             self.mem[j] = *i;
             j += 1;
         }
-
-        
-        println!("Print of ram after buffer has been read");
-        let mut res: u16;
-        let mut i = 0x200;
-        while i < 0x250 {
-            res = self.mem[i] as u16;
-            res <<= 8;
-            res |= self.mem[i+1] as u16;
-            println!("Addr: {:#04X} Opcode: {:#08X}", i, res);
-            i += 2;
-        }
     }
 
     pub fn read(&self, addr: usize) -> u16 {

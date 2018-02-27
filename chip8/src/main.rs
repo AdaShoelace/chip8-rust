@@ -21,6 +21,7 @@ use std::io;
 use std::time::{Duration, Instant};
 use std::thread;
 use std::u16;
+use std::collections::binary_heap::*;
 
 use chip::Chip;
 use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
@@ -28,7 +29,7 @@ use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
 use sfml::window::{VideoMode, ContextSettings, Event, Key, Style};
 use sfml::system::{Time, Clock, Vector2f};
 use sfml::graphics::{RenderTarget, RectangleShape, Transformable, Drawable, RenderWindow, Shape,
-Color};
+                     Color};
 
 use nfd::Response;
 
@@ -40,15 +41,20 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
     opts.optopt("r", "rom", "path to rom", "NAME");
-    opts.optopt("b", "break-point", "adress to break on (in hexadecimal)", "ADRESS");
+    opts.optopt(
+        "b",
+        "break-point",
+        "adress to break on (in hexadecimal)",
+        "ADRESS",
+    );
     opts.optflag("d", "debug", "run in debug mode");
     opts.optflag("h", "help", "print this help menu");
 
     let program = args[0].clone();
 
     let matches: Matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m },
-        Err(f) => { panic!(f.to_string()) }
+        Ok(m) => m,
+        Err(f) => panic!(f.to_string()),
     };
 
     if matches.opt_present("h") {
@@ -64,22 +70,37 @@ fn main() {
         debugger = Some(Debugger::new());
     }
 
-    let rom: String = if !matches.opt_strs("r").is_empty() { matches.opt_strs("r")[0].clone() } else {
-        let file_result = nfd::open_file_dialog(Some("ch8"), env::current_dir().unwrap().as_path().to_str()).unwrap_or_else(|e| {
-            panic!(e);
-        });
+    let rom: String = if !matches.opt_strs("r").is_empty() {
+        matches.opt_strs("r")[0].clone()
+    } else {
+        let file_result =
+            nfd::open_file_dialog(Some("ch8"), env::current_dir().unwrap().as_path().to_str())
+                .unwrap_or_else(|e| {
+                    panic!(e);
+                });
 
         match file_result {
             Response::Okay(file_path) => file_path,
             Response::OkayMultiple(files) => {
                 println!("Choose one file only");
                 panic!();
-            },
+            }
             _ => panic!(),
         }
     };
-
-    let break_point: Option<String> = if matches.opt_defined("b") { Some(matches.opt_strs("b")[0].clone()) } else { None };
+    
+    //collect vector of breakpoints
+    let mut break_point: Option<BinaryHeap<u16>> = if matches.opt_present("b") {
+        Some(
+            matches
+                .opt_strs("b")
+                .into_iter()
+                .map(|x| (u16::from_str_radix(x.as_str(), 16).unwrap() + 0x200))
+                .collect::<BinaryHeap<u16>>(),
+        )
+    } else {
+        None
+    };
 
     let mut chip = Chip::new();
     load_rom(rom, &mut chip);
@@ -93,7 +114,7 @@ fn main() {
         "Chip8 Emulator",
         Style::CLOSE,
         &Default::default(),
-        );
+    );
 
 
     let mut rect = RectangleShape::new();
@@ -109,9 +130,7 @@ fn main() {
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => return,
-                Event::KeyPressed { code: Key::Escape, .. } => {
-                    return
-                },
+                Event::KeyPressed { code: Key::Escape, .. } => return,
                 Event::KeyPressed { code: Key::F5, .. } => step = true,
                 _ => {}
             };
@@ -126,15 +145,20 @@ fn main() {
                         ok.update(chip.clone());
                         //step = false;
                         match break_point {
-                            Some(ref addr) => {
-                                if chip.PC == u16::from_str_radix(addr.as_str(), 16).unwrap() + 0x200 {
-                                    println!("PC: {} break_point: {}", &chip.PC, i64::from_str_radix(addr.as_str(), 16).unwrap() as u16);
+                            Some(ref mut addr) => {
+                                if chip.PC == *addr.peek().unwrap()
+                                {
+                                    println!(
+                                        "PC: {} break_point: {}",
+                                        &chip.PC,
+                                        *addr.peek().unwrap()
+                                    );
                                     step = false;
                                 }
-                            },
+                            }
                             None => {}
                         };
-                    },
+                    }
                     None => {}
                 }
             }

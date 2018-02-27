@@ -50,7 +50,7 @@ impl Debugger {
         let initial_x: f32 = 0f32;
         let mut pc = Text::new(format!("PC: {}", chip.PC).as_str(), &self.font, 14);
         pc.set_position((0f32, 0f32));
-        pc.set_fill_color(&Color::WHITE);
+        //pc.set_fill_color(&Color::WHITE);
 
         let mut i = Text::new(format!("I: {}", chip.I).as_str(), &self.font, 14);
         i.set_position((initial_x, initial_y + y_offset));

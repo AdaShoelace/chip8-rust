@@ -21,7 +21,7 @@ use std::io;
 use std::time::{Duration, Instant};
 use std::thread;
 use std::u16;
-use std::collections::binary_heap::*;
+use std::collections::BTreeSet;
 
 use chip::Chip;
 use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
@@ -29,7 +29,7 @@ use utils::{SCREEN_COLUMNS, SCREEN_ROWS, SCALE};
 use sfml::window::{VideoMode, ContextSettings, Event, Key, Style};
 use sfml::system::{Time, Clock, Vector2f};
 use sfml::graphics::{RenderTarget, RectangleShape, Transformable, Drawable, RenderWindow, Shape,
-                     Color};
+Color};
 
 use nfd::Response;
 
@@ -46,7 +46,7 @@ fn main() {
         "break-point",
         "adress to break on (in hexadecimal)",
         "ADRESS",
-    );
+        );
     opts.optflag("d", "debug", "run in debug mode");
     opts.optflag("h", "help", "print this help menu");
 
@@ -75,9 +75,9 @@ fn main() {
     } else {
         let file_result =
             nfd::open_file_dialog(Some("ch8"), env::current_dir().unwrap().as_path().to_str())
-                .unwrap_or_else(|e| {
-                    panic!(e);
-                });
+            .unwrap_or_else(|e| {
+                panic!(e);
+            });
 
         match file_result {
             Response::Okay(file_path) => file_path,
@@ -88,16 +88,16 @@ fn main() {
             _ => panic!(),
         }
     };
-    
+
     //collect vector of breakpoints
-    let mut break_point: Option<BinaryHeap<u16>> = if matches.opt_present("b") {
+    let mut break_point: Option<BTreeSet<u16>> = if matches.opt_present("b") {
         Some(
             matches
-                .opt_strs("b")
-                .into_iter()
-                .map(|x| (u16::from_str_radix(x.as_str(), 16).unwrap() + 0x200))
-                .collect::<BinaryHeap<u16>>(),
-        )
+            .opt_strs("b")
+            .into_iter()
+            .map(|x| (u16::from_str_radix(x.as_str(), 16).unwrap() + 0x200))
+            .collect::<BTreeSet<u16>>(),
+            )
     } else {
         None
     };
@@ -114,7 +114,7 @@ fn main() {
         "Chip8 Emulator",
         Style::CLOSE,
         &Default::default(),
-    );
+        );
 
 
     let mut rect = RectangleShape::new();
@@ -146,13 +146,8 @@ fn main() {
                         //step = false;
                         match break_point {
                             Some(ref mut addr) => {
-                                if chip.PC == *addr.peek().unwrap()
-                                {
-                                    println!(
-                                        "PC: {} break_point: {}",
-                                        &chip.PC,
-                                        *addr.peek().unwrap()
-                                    );
+                                if addr.contains(&chip.PC) {
+                                    println!("PC: {}", &chip.PC);
                                     step = false;
                                 }
                             }

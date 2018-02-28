@@ -48,18 +48,21 @@ impl Debugger {
         let y_offset: f32 = 16f32;
         let initial_y: f32 = 0f32;
         let initial_x: f32 = 0f32;
-        let mut pc = Text::new(format!("PC: {}", chip.PC).as_str(), &self.font, 14);
-        pc.set_position((0f32, 0f32));
-        //pc.set_fill_color(&Color::WHITE);
+        let mut pc = Text::new(format!("PC: {:X}", chip.PC).as_str(), &self.font, 14);
+        pc.set_position((initial_x, initial_y));
 
-        let mut i = Text::new(format!("I: {}", chip.I).as_str(), &self.font, 14);
-        i.set_position((initial_x, initial_y + y_offset));
+        let mut sp = Text::new(format!("SP: {:X}", chip.SP).as_str(), &self.font, 14);
+        sp.set_position((initial_x, initial_y + y_offset));
+        
+        let mut i = Text::new(format!("I: {:X}", chip.I).as_str(), &self.font, 14);
+        i.set_position((initial_x, initial_y + (y_offset*2f32)));
         self.window.clear(&Color::BLACK);
         self.window.draw(&pc);
+        self.window.draw(&sp);
         self.window.draw(&i);
-        let y = initial_y + (y_offset * 2f32);
+        let y = initial_y + (y_offset * 3f32);
         for i in 0..16 {
-            let mut current_reg = Text::new(format!("V{:X}: {}", i, chip.V[i]).as_str(), &self.font, 14);
+            let mut current_reg = Text::new(format!("V{:X}: {:X}", i, chip.V[i]).as_str(), &self.font, 14);
             current_reg.set_position((initial_x, y + (y_offset * i as f32) as f32));
             self.window.draw(&current_reg);
 

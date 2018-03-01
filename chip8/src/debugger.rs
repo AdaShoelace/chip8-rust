@@ -1,6 +1,6 @@
 #![allow(dead_code, unused)]
 
-use chip::*;
+use engine::chip::Chip;
 
 use sfml::window::*;
 use sfml::system::*;

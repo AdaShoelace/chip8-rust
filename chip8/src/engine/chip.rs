@@ -2,7 +2,7 @@
 
 use rand::Rng;
 use rand::thread_rng;
-use ram::Ram;
+use engine::ram::Ram;
 use utils::*;
 
 #[derive(Clone)]

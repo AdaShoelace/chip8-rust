@@ -200,7 +200,7 @@ impl Chip {
         self.V[0xf] = (self.V[get_X(opcode) as usize] <= self.V[get_Y(opcode) as usize]) as u8;
 
         self.V[get_X(opcode) as usize] =
-            self.V[get_X(opcode) as usize].wrapping_sub(self.V[get_Y(opcode) as usize]);
+            self.V[get_Y(opcode) as usize].wrapping_sub(self.V[get_X(opcode) as usize]);
     }
 
     fn decode_8XYE(&mut self, opcode: u16) {

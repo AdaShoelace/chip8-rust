@@ -17,15 +17,24 @@ Whoever want to try it out or even modify it are welcome to do so!
 Please feel free to make pull requests if you have ways to better the code or find bugs.  
 
 ## Current state
-Right now the emulator is working albeit with a couple of bugs when playing certain roms.  
-The Trip8 demo, The zero demo and BRIX all work pretty much as intended.
+~~Right now the emulator is working albeit with a couple of bugs when playing certain roms.  
+The Trip8 demo, The zero demo and BRIX all work pretty much as intended.~~
+All roms I've tested now works properly. (NOT super chip8 or HP48)
 
 ## Issues and wanted features
 ### Emulator
 - [x] Clockspeed/timer countdown
 - [x] Freezing upon collision
-- [ ] (Invaders) Restart upon killing an entire wave
-- [ ] (Brix) Fail to restart when out of lives
+- [x] (Invaders) Restart upon killing an entire wave
+- [x] (Brix) Fail to restart when out of lives
+- [ ] Load saved config
+
+#### Main menu
+- [ ] Choose foreground color
+- [ ] Choose background color
+- [ ] Save config
+- [ ] Choose rom via file browser
+
 ### Debugger
 Currently I am working on finding the bug that causes the strange behaviours mentioned in the section above (Space invaders and Brix). Once they are gone I will focus on getting a working debug mode in the emulator. This will allow for the emulator to work both as an emulator and as a debugger for roms you write yourself.
 ### Disassembler

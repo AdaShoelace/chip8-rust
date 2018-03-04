@@ -2,7 +2,7 @@
 
 use rand::Rng;
 use rand::thread_rng;
-use ram::Ram;
+use engine::ram::Ram;
 use utils::*;
 
 #[derive(Clone)]
@@ -121,8 +121,9 @@ impl Chip {
     }
 
     fn decode_00EE(&mut self, opcode: u16) {
-        self.PC = self.stack[self.SP as usize];
         self.SP = self.SP.wrapping_sub(1);
+        self.PC = self.stack[self.SP as usize];
+        //self.SP = self.SP.wrapping_sub(1);
     }
 
     fn decode_1NNN(&mut self, opcode: u16) {
@@ -130,8 +131,10 @@ impl Chip {
     }
 
     fn decode_2NNN(&mut self, opcode: u16) {
-        self.SP = self.SP.wrapping_add(1);
+        //self.SP = self.SP.wrapping_add(1);
+        //self.stack[self.SP as usize] = self.PC;
         self.stack[self.SP as usize] = self.PC;
+        self.SP = self.SP.wrapping_add(1);
         self.PC = get_NNN(opcode);
     }
 
@@ -193,14 +196,14 @@ impl Chip {
 
     fn decode_8XY6(&mut self, opcode: u16) {
         self.V[0xf] = self.V[get_X(opcode) as usize] & 1;
-        self.V[get_X(opcode) as usize] = self.V[get_Y(opcode) as usize] >> 1;
+        self.V[get_X(opcode) as usize] >>= 1;
     }
 
     fn decode_8XY7(&mut self, opcode: u16) {
         self.V[0xf] = (self.V[get_X(opcode) as usize] <= self.V[get_Y(opcode) as usize]) as u8;
 
         self.V[get_X(opcode) as usize] =
-            self.V[get_X(opcode) as usize].wrapping_sub(self.V[get_Y(opcode) as usize]);
+            self.V[get_Y(opcode) as usize].wrapping_sub(self.V[get_X(opcode) as usize]);
     }
 
     fn decode_8XYE(&mut self, opcode: u16) {
@@ -301,6 +304,7 @@ impl Chip {
         self.mem.write(self.I as usize + 0, bcd / 100);
         self.mem.write(self.I as usize + 1, (bcd % 100) / 10);
         self.mem.write(self.I as usize + 2, bcd % 10);
+
     }
 
     fn decode_FX55(&mut self, opcode: u16) {

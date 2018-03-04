@@ -27,7 +27,7 @@ The Trip8 demo, The zero demo and BRIX all work pretty much as intended.
 - [ ] (Invaders) Restart upon killing an entire wave
 - [ ] (Brix) Fail to restart when out of lives
 ### Debugger
-* TBA
+Currently I am working on finding the bug that causes the strange behaviours mentioned in the section above (Space invaders and Brix). Once they are gone I will focus on getting a working debug mode in the emulator. This will allow for the emulator to work both as an emulator and as a debugger for roms you write yourself.
 ### Disassembler
 * TBA
 ### Assembler

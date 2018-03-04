@@ -1,6 +1,6 @@
 #![allow(dead_code, unused)]
 
-use chip::*;
+use engine::chip::Chip;
 
 use sfml::window::*;
 use sfml::system::*;
@@ -34,7 +34,7 @@ impl Debugger {
             window: RenderWindow::new(
                         (600, 400),
                         "Debug window",
-                        Style::CLOSE,
+                        Style::TITLEBAR,
                         &Default::default(),
                         ),
                         font: Font::from_file(current_path.as_path().to_str().unwrap()).unwrap(),

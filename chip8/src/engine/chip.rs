@@ -18,10 +18,11 @@ pub struct Chip {
     pub stack: [u16; 16],
     pub key: [bool; 16],
     pub draw: bool,
+    pub super_mode: bool,
 }
 
 impl Chip {
-    pub fn new() -> Chip {
+    pub fn new(super_mode: bool) -> Chip {
         Chip {
             I: 0,
             mem: Ram::new(),
@@ -34,6 +35,7 @@ impl Chip {
             stack: [0; 16],
             key: [false; 16],
             draw: false,
+            super_mode: super_mode
         }
     }
 
@@ -196,7 +198,11 @@ impl Chip {
 
     fn decode_8XY6(&mut self, opcode: u16) {
         self.V[0xf] = self.V[get_X(opcode) as usize] & 1;
-        self.V[get_X(opcode) as usize] >>= 1;
+        if self.super_mode {
+            self.V[get_X(opcode) as usize] >>= 1;
+        } else {
+            self.V[get_X(opcode) as usize] = self.V[get_Y(opcode) as usize] >> 1;
+        }
     }
 
     fn decode_8XY7(&mut self, opcode: u16) {

@@ -49,6 +49,7 @@ fn main() {
         );
     opts.optflag("d", "debug", "run in debug mode");
     opts.optflag("h", "help", "print this help menu");
+    opts.optflag("s", "supermode", "run in super chip8 mode");
 
     let program = args[0].clone();
 

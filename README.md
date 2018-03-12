@@ -24,11 +24,20 @@ The Trip8 demo, The zero demo and BRIX all work pretty much as intended.
 ### Emulator
 - [x] Clockspeed/timer countdown
 - [x] Freezing upon collision
-- [ ] (Invaders) Restart upon killing an entire wave
-- [ ] (Brix) Fail to restart when out of lives
+- [x] (Invaders) Restart upon killing an entire wave
+- [x] (Brix) Fail to restart when out of lives
 ### Debugger
 Currently I am working on finding the bug that causes the strange behaviours mentioned in the section above (Space invaders and Brix). Once they are gone I will focus on getting a working debug mode in the emulator. This will allow for the emulator to work both as an emulator and as a debugger for roms you write yourself.
 ### Disassembler
 * TBA
 ### Assembler
 * TBA
+### Disclaimer
+Even though the "supermode" flag exists the emulator is not fully compatible with super chip 8 games. The only thing this actually change is a small detail in the 8XY6 instruction.
+
+## Instructions
+### Dependencies
+* csfml
+* sfml
+
+Clone and compile using cargo.

@@ -25,7 +25,7 @@ impl<'a> App<'a> {
     pub fn new(args: Matches) -> Self {
         App {
             gui: Gui::new(),
-            chip: Chip::new(),
+            chip: Chip::new(if args.opt_present("s") { true } else { false }),
             debugger: if args.opt_present("d") { Some(Debugger::new()) } else { None },
             break_points: Self::get_break_points(args),
             running: true,

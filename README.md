@@ -27,7 +27,6 @@ All roms I've tested now works properly. (NOT super chip8 or HP48)
 - [x] Freezing upon collision
 - [x] (Invaders) Restart upon killing an entire wave
 - [x] (Brix) Fail to restart when out of lives
-- [ ] Load saved config
 
 #### Main menu
 - [ ] Choose foreground color
@@ -41,3 +40,12 @@ Currently I am working on finding the bug that causes the strange behaviours men
 * TBA
 ### Assembler
 * TBA
+### Disclaimer
+Even though the "supermode" flag exists the emulator is not fully compatible with super chip 8 games. The only thing this actually change is a small detail in the 8XY6 instruction.
+
+## Instructions
+### Dependencies
+* csfml
+* sfml
+
+Clone and compile using cargo.

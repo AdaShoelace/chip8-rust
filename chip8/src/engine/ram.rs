@@ -1,15 +1,22 @@
 #![allow(dead_code, unused_variables)]
+
+use wasm_bindgen::prelude::*;
+
 pub const MEM_START: u16 = 0x200;
 
+
+
+#[wasm_bindgen]
 #[derive(Clone)]
 pub struct Ram {
-    pub mem: [u8; 4096],
+    mem: Vec<u8>,
 }
 
+#[wasm_bindgen]
 impl Ram {
     pub fn new() -> Ram {
-        let mut ram = Ram { mem: [0; 4096] };
-        let sprites: [[u8; 5]; 16] = [
+        let mut ram = Ram { mem: vec![0; 4096] };
+        let sprites: Vec<[u8;5]> = vec![
             [0xF0, 0x90, 0x90, 0x90, 0xF0],
             [0x20, 0x60, 0x20, 0x20, 0x70],
             [0xF0, 0x10, 0xF0, 0x80, 0xF0],
@@ -63,7 +70,7 @@ impl Ram {
         }
     }
 
-    pub fn write_rom(&mut self, rom: &Vec<u8>) {
+    pub fn write_rom(&mut self, rom: Vec<u8>) {
         let mut j = 0x200;
         for i in rom.iter() {
             self.mem[j] = *i;

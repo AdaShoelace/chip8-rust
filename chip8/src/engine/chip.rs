@@ -1,41 +1,51 @@
-#![allow(non_snake_case)]
+#![allow(non_snake_case, dead_code, unused_variables, unused_mut)]
 
-use rand::Rng;
-use rand::thread_rng;
+use rand::*;
 use engine::ram::Ram;
-use utils::*;
+use super::utils::*;
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
+#[repr(u8)]
 #[derive(Clone)]
-pub struct Chip {
-    pub I: usize,
-    pub mem: Ram,
-    pub V: [u8; 16],
-    pub PC: u16,
-    pub SP: u8,
-    pub delay_timer: u8,
-    pub sound_timer: u8,
-    pub vid_mem: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS],
-    pub stack: [u16; 16],
-    pub key: [bool; 16],
-    pub draw: bool,
-    pub super_mode: bool,
+pub enum RunMode {
+    Legacy,
+    SuperChip
 }
 
+#[wasm_bindgen]
+#[derive(Clone)]
+pub struct Chip {
+    I: usize,
+    mem: Ram,
+    V: Vec<u8>,
+    PC: u16,
+    SP: u8,
+    delay_timer: u8,
+    sound_timer: u8,
+    vid_mem: Vec<Vec<u8>>,
+    stack: Vec<u16>,
+    key: Vec<bool>,
+    draw: bool,
+    mode: RunMode,
+}
+
+#[wasm_bindgen]
 impl Chip {
-    pub fn new(super_mode: bool) -> Chip {
+    pub fn new() -> Chip {
         Chip {
             I: 0,
             mem: Ram::new(),
-            V: [0; 16],
+            V: vec![0; 16],
             PC: 0x200,
             SP: 0,
             delay_timer: 0,
             sound_timer: 0,
-            vid_mem: [[0; SCREEN_COLUMNS]; SCREEN_ROWS],
-            stack: [0; 16],
-            key: [false; 16],
+            vid_mem: vec![vec![0; SCREEN_COLUMNS]; SCREEN_ROWS],
+            stack: vec![0; 16],
+            key: vec![false; 16],
             draw: false,
-            super_mode: super_mode
+            mode: RunMode::SuperChip
         }
     }
 
@@ -48,12 +58,14 @@ impl Chip {
         self.PC += 2;
         opcode
     }
-
+    pub fn load_rom(&mut self, rom: Vec<u8>) {
+        self.mem.write_rom(rom);
+    }
     pub fn emulate_cycle(&mut self) {
         let opcode = self.fetch();
         self.execute(opcode);
     }
-
+    
     fn execute(&mut self, opcode: u16) {
         match (opcode & 0xf000) >> 12 {
             0x0 => {
@@ -119,7 +131,7 @@ impl Chip {
     }
 
     fn decode_00E0(&mut self, opcode: u16) {
-        self.vid_mem = [[0; SCREEN_COLUMNS]; SCREEN_ROWS];
+        self.vid_mem = vec![vec![0; SCREEN_COLUMNS]; SCREEN_ROWS];
     }
 
     fn decode_00EE(&mut self, opcode: u16) {
@@ -198,10 +210,10 @@ impl Chip {
 
     fn decode_8XY6(&mut self, opcode: u16) {
         self.V[0xf] = self.V[get_X(opcode) as usize] & 1;
-        if self.super_mode {
-            self.V[get_X(opcode) as usize] >>= 1;
-        } else {
-            self.V[get_X(opcode) as usize] = self.V[get_Y(opcode) as usize] >> 1;
+
+        match self.mode.clone() {
+            RunMode::SuperChip => self.V[get_X(opcode) as usize] >>= 1,
+            RunMode::Legacy => self.V[get_X(opcode) as usize] = self.V[get_Y(opcode) as usize] >> 1,
         }
     }
 
@@ -316,7 +328,8 @@ impl Chip {
     fn decode_FX55(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg + 1 {
-            self.mem.mem[self.I + j] = self.V[j];
+            //self.mem.mem[self.I + j] = self.V[j];
+            self.mem.write(self.I + j, self.V[j]);
         }
             //self.I += last_reg + 1;
     }
@@ -324,7 +337,8 @@ impl Chip {
     fn decode_FX65(&mut self, opcode: u16) {
         let last_reg = get_X(opcode) as usize;
         for j in 0..last_reg + 1 {
-            self.V[j] = self.mem.mem[self.I + j];
+            //self.V[j] = self.mem.mem[self.I + j];
+            self.V[j] = ((self.mem.read(self.I + j) & 0xFF00) >> 8) as u8;
         }
             //self.I += last_reg + 1;
     }

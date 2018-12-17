@@ -1,3 +1,10 @@
 import * as wasm from "../pkg/chip8";
-alert(`vid_mem address ${wasm.get_vid_mem()}`);
-alert(`mem address ${wasm.get_mem()}`);
+
+import { memory } from '../pkg/chip8_bg'
+
+let ptr = wasm.get_mem();
+let buf = new Uint8Array(memory.buffer);
+let value = buf[ptr]
+
+alert(value)
+

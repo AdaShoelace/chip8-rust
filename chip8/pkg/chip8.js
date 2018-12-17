@@ -19,76 +19,24 @@ function passArray8ToWasm(arg) {
     return [ptr, arg.length];
 }
 /**
-* @param {number} arg0
-* @returns {Chip}
+* @returns {void}
 */
-export function get_chip(arg0) {
-    return Chip.__wrap(wasm.get_chip(arg0));
+export function execute_cycle() {
+    return wasm.execute_cycle();
 }
 
-function freeChip(ptr) {
-
-    wasm.__wbg_chip_free(ptr);
-}
 /**
+* @returns {number}
 */
-export class Chip {
+export function get_mem() {
+    return wasm.get_mem();
+}
 
-    static __wrap(ptr) {
-        const obj = Object.create(Chip.prototype);
-        obj.ptr = ptr;
-
-        return obj;
-    }
-
-    free() {
-        const ptr = this.ptr;
-        this.ptr = 0;
-        freeChip(ptr);
-    }
-
-    /**
-    * @param {number} arg0
-    * @returns {Chip}
-    */
-    static new(arg0) {
-        return Chip.__wrap(wasm.chip_new(arg0));
-    }
-    /**
-    * @param {boolean} arg0
-    * @returns {void}
-    */
-    print_mem(arg0) {
-        return wasm.chip_print_mem(this.ptr, arg0);
-    }
-    /**
-    * @param {Uint8Array} arg0
-    * @returns {void}
-    */
-    load_rom(arg0) {
-        const [ptr0, len0] = passArray8ToWasm(arg0);
-        return wasm.chip_load_rom(this.ptr, ptr0, len0);
-    }
-    /**
-    * @returns {void}
-    */
-    emulate_cycle() {
-        return wasm.chip_emulate_cycle(this.ptr);
-    }
-    /**
-    * @param {number} arg0
-    * @returns {void}
-    */
-    decode_DXYN(arg0) {
-        return wasm.chip_decode_DXYN(this.ptr, arg0);
-    }
-    /**
-    * @param {number} arg0
-    * @returns {void}
-    */
-    debug_print(arg0) {
-        return wasm.chip_debug_print(this.ptr, arg0);
-    }
+/**
+* @returns {number}
+*/
+export function get_vid_mem() {
+    return wasm.get_vid_mem();
 }
 
 function freeRam(ptr) {
@@ -117,6 +65,12 @@ export class Ram {
     */
     static new() {
         return Ram.__wrap(wasm.ram_new());
+    }
+    /**
+    * @returns {number}
+    */
+    get_meta_address() {
+        return wasm.ram_get_meta_address(this.ptr);
     }
     /**
     * @returns {number}

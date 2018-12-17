@@ -1,27 +1,17 @@
 /* tslint:disable */
 export enum RunMode {Legacy,SuperChip,}
-export function get_chip(arg0: number): Chip;
+export function execute_cycle(): void;
 
-export class Chip {
-free(): void;
+export function get_mem(): number;
 
-static  new(arg0: number): Chip;
+export function get_vid_mem(): number;
 
- print_mem(arg0: boolean): void;
-
- load_rom(arg0: Uint8Array): void;
-
- emulate_cycle(): void;
-
- decode_DXYN(arg0: number): void;
-
- debug_print(arg0: number): void;
-
-}
 export class Ram {
 free(): void;
 
 static  new(): Ram;
+
+ get_meta_address(): number;
 
  get_length(): number;
 

@@ -3,20 +3,20 @@
 use wasm_bindgen::prelude::*;
 
 pub const MEM_START: u16 = 0x200;
-
+pub const MEM_SIZE: usize = 4096;
 
 
 #[wasm_bindgen]
 #[derive(Clone)]
 pub struct Ram {
-    mem: Vec<u8>,
+    mem: [u8; 4096],
 }
 
 #[wasm_bindgen]
 impl Ram {
     pub fn new() -> Ram {
-        let mut ram = Ram { mem: vec![0; 4096] };
-        let sprites: Vec<[u8;5]> = vec![
+        let mut ram = Ram { mem: [0; MEM_SIZE] };
+        let sprites: [[u8;5]; 16] = [
             [0xF0, 0x90, 0x90, 0x90, 0xF0],
             [0x20, 0x60, 0x20, 0x20, 0x70],
             [0xF0, 0x10, 0xF0, 0x80, 0xF0],
@@ -45,7 +45,9 @@ impl Ram {
         }
         ram
     }
-
+    pub fn get_meta_address(&self) -> *const [u8; 4096] {
+        &self.mem
+    }
     pub fn get_length(&self) -> usize {
         self.mem.len()
     }
@@ -89,23 +91,3 @@ impl Ram {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use ram::*;
-
-    #[test]
-    fn test_read() {
-        let mut r = Ram::new();
-        r.mem[0x202] = 0x33;
-        r.mem[0x203] = 0x44;
-        let res: u16 = r.read(0x202usize);
-        assert!(res == 0x3344);
-    }
-
-    #[test]
-    fn test_write() {
-        let mut r = Ram::new();
-        r.write(0x200usize, 0x33);
-        assert!(r.mem[0x200usize] == 0x33);
-    }
-}

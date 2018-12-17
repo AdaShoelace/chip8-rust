@@ -13,57 +13,60 @@ pub enum RunMode {
     SuperChip
 }
 
-#[wasm_bindgen]
 #[derive(Clone)]
 pub struct Chip {
     I: usize,
-    mem: Ram,
-    V: Vec<u8>,
+    pub mem: Ram,
+    V: [u8; 16],
     PC: u16,
-    SP: u8,
+    pub SP: u8,
     delay_timer: u8,
     sound_timer: u8,
-    vid_mem: Vec<Vec<u8>>,
-    stack: Vec<u16>,
-    key: Vec<bool>,
+    pub vid_mem: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS],
+    stack: [u16; 16],
+    key: [bool; 16],
     draw: bool,
     mode: RunMode,
 }
 
-#[wasm_bindgen]
 impl Chip {
     pub fn new() -> Chip {
         Chip {
             I: 0,
             mem: Ram::new(),
-            V: vec![0; 16],
+            V: [0; 16],
             PC: 0x200,
             SP: 0,
             delay_timer: 0,
             sound_timer: 0,
-            vid_mem: vec![vec![0; SCREEN_COLUMNS]; SCREEN_ROWS],
-            stack: vec![0; 16],
-            key: vec![false; 16],
+            vid_mem: [[0; SCREEN_COLUMNS]; SCREEN_ROWS],
+            stack: [0; 16],
+            key: [false; 16],
             draw: false,
             mode: RunMode::SuperChip
         }
     }
-
+    
     pub fn print_mem(&self, all: bool) {
         self.mem.print(all);
     }
 
-    fn fetch(&mut self) -> u16 {
-        let opcode = self.mem.read(self.PC as usize);
-        self.PC += 2;
-        opcode
-    }
     pub fn load_rom(&mut self, rom: Vec<u8>) {
         self.mem.write_rom(rom);
     }
     pub fn emulate_cycle(&mut self) {
         let opcode = self.fetch();
         self.execute(opcode);
+    }
+    
+    pub fn get_vid_mem(&self) -> [[u8; SCREEN_COLUMNS]; SCREEN_ROWS] {
+        self.vid_mem.clone()
+    }
+
+    fn fetch(&mut self) -> u16 {
+        let opcode = self.mem.read(self.PC as usize);
+        self.PC += 2;
+        opcode
     }
     
     fn execute(&mut self, opcode: u16) {
@@ -131,7 +134,7 @@ impl Chip {
     }
 
     fn decode_00E0(&mut self, opcode: u16) {
-        self.vid_mem = vec![vec![0; SCREEN_COLUMNS]; SCREEN_ROWS];
+        self.vid_mem = [[0; SCREEN_COLUMNS]; SCREEN_ROWS];
     }
 
     fn decode_00EE(&mut self, opcode: u16) {
@@ -360,87 +363,3 @@ impl Chip {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use utils::{SCREEN_COLUMNS, SCREEN_ROWS};
-    use chip::*;
-    #[test]
-    fn test_DXYN() {
-        let frm_buf: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS] = [[0; SCREEN_COLUMNS]; SCREEN_ROWS];
-
-        let mut c = Chip::new();
-
-        let opcode: u16 = 0xd004;
-        assert!(c.I == 0);
-        c.mem.write((c.I + 0) as usize, 0b00011000u8);
-        c.mem.write((c.I + 1) as usize, 0b00100100u8);
-        c.mem.write((c.I + 2) as usize, 0b00100100u8);
-        c.mem.write((c.I + 3) as usize, 0b00011000u8);
-
-        c.decode_DXYN(opcode);
-
-        //print_buf(&c.vid_mem);
-
-    }
-
-    #[test]
-    fn test_FX0A() {
-        let mut c = Chip::new();
-        let opcode: u16 = 0xF30A;
-        c.key[5] = true;
-        c.PC = 2;
-        c.decode_FX0A(opcode);
-        assert!(c.PC == 2 as usize);
-        assert!(c.read_reg(get_X(opcode) as u8) == 5);
-
-    }
-
-    #[test]
-    fn test_3XNN() {
-        let mut c = Chip::new();
-        let opcode: u16 = 0x3340;
-        c.V[3] = 0x40;
-        c.PC = 4;
-        c.decode_3XNN(opcode);
-        //println!("PC after: {}", c.PC);
-        assert!(c.PC == 6);
-    }
-
-    #[test]
-    fn test_4XNN() {
-        let mut c = Chip::new();
-        let opcode: u16 = 0x3340;
-        c.V[3] = 0x41;
-        c.PC = 4;
-        c.decode_4XNN(opcode);
-        //println!("PC after: {}", c.PC);
-        assert!(c.PC == 6);
-    }
-
-    #[test]
-    fn test_8XY5() {
-        let mut c = Chip::new();
-        let opcode: u16 = 0x3340;
-        c.V[3] = 200;
-        c.V[4] = 150;
-        c.decode_8XY5(opcode);
-        assert!(c.V[0xf] == 1);
-    }
-
-    fn print_buf(buf: &[[u8; SCREEN_COLUMNS]; SCREEN_ROWS]) {
-        for k in 0..SCREEN_COLUMNS + 2 {
-            print!{"-"};
-        }
-        println!();
-        for i in 0..SCREEN_ROWS {
-            print!("|");
-            for j in 0..SCREEN_COLUMNS {
-                print!("{}", buf[i][j]);
-            }
-            println!("|");
-        }
-        for k in 0..SCREEN_COLUMNS + 2 {
-            print!{"-"};
-        }
-    }
-}

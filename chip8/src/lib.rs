@@ -2,16 +2,35 @@
 extern crate wasm_bindgen;
 extern crate rand;
 
-pub mod engine;
+#[macro_use]
+extern crate lazy_static;
+
+mod engine;
 
 use wasm_bindgen::prelude::*;
-use engine::chip::RunMode;
+use std::sync::Mutex;
+use engine::chip::Chip;
+use engine::utils::*;
 
-pub use engine::chip::Chip; // <--Re-export
-
-static mut chip: Chip = Chip::new();
+lazy_static! {
+    static ref CHIP: Mutex<Chip> = {
+        let mut c = Chip::new();
+        Mutex::new(c)
+    };
+}
 
 #[wasm_bindgen]
 pub fn execute_cycle() {
-    unsafe { chip.emulate_cycle(); }
+    CHIP.lock().unwrap().emulate_cycle();
 }
+
+#[wasm_bindgen]
+pub fn get_mem() -> *const [u8; 4096] {
+    CHIP.lock().unwrap().mem.get_meta_address()
+}
+
+#[wasm_bindgen]
+pub fn get_vid_mem() -> *const [[u8; SCREEN_COLUMNS]; SCREEN_ROWS]  {
+    &(CHIP.lock().unwrap().vid_mem)
+}
+

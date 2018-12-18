@@ -1,4 +1,5 @@
 #![feature(custom_attribute, /* wasm_custom_section, wasm_import_module*/)]
+#![allow(unused_mut)]
 extern crate wasm_bindgen;
 extern crate rand;
 
@@ -32,5 +33,27 @@ pub fn get_mem() -> *const [u8; 4096] {
 #[wasm_bindgen]
 pub fn get_vid_mem() -> *const [[u8; SCREEN_COLUMNS]; SCREEN_ROWS]  {
     &(CHIP.lock().unwrap().vid_mem)
+}
+
+#[wasm_bindgen]
+pub fn key_pressed(key: u8) {
+    CHIP.lock().unwrap().key_pressed(key);
+}
+
+#[wasm_bindgen]
+pub fn dump_registers() -> String {
+    format!{"I: {}", CHIP.lock().unwrap().I}
+}
+
+#[wasm_bindgen]
+pub fn dump_key_mem() -> String {
+    let mut res = String::new(); 
+    let len = CHIP.lock().unwrap().key.len();
+    for i in 0..len {
+        if CHIP.lock().unwrap().key[i] {
+            res.push_str(&format!("{},", i));
+        }
+    }
+    res
 }
 

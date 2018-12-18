@@ -1468,3 +1468,41 @@ Dec 17 20:09:06.952 ERRO Compiling your crate to WebAssembly
 Dec 17 20:15:46.270 ERRO Compiling your crate to WebAssembly
 Dec 17 20:17:22.051 ERRO Compiling your crate to WebAssembly
 Dec 17 20:23:20.627 ERRO Compiling your crate to WebAssembly
+Dec 18 18:45:21.396 ERRO Compiling your crate to WebAssembly
+Dec 18 19:00:39.649 ERRO Compiling your crate to WebAssembly
+Dec 18 19:53:38.935 ERRO Compiling your crate to WebAssembly
+Dec 18 19:54:39.775 ERRO Compiling your crate to WebAssembly
+Dec 18 20:01:52.870 ERRO Compiling your crate to WebAssembly
+Dec 18 20:02:19.294 ERRO Compiling your crate to WebAssembly
+Dec 18 20:08:58.058 ERRO Compiling your crate to WebAssembly
+Dec 18 20:09:49.844 ERRO Compiling your crate to WebAssembly
+Dec 18 20:12:25.829 ERRO Compiling your crate to WebAssembly
+Dec 18 20:12:44.439 INFO Running build command...
+Dec 18 20:12:44.439 INFO Checking rustc version...
+Dec 18 20:12:44.461 INFO rustc version is 33.
+Dec 18 20:12:44.461 INFO Checking crate configuration...
+Dec 18 20:12:44.461 INFO Crate is correctly configured.
+Dec 18 20:12:44.461 INFO Adding wasm-target...
+Dec 18 20:12:44.461 INFO Running "rustup" "target" "add" "wasm32-unknown-unknown"
+Dec 18 20:12:44.501 INFO rustup (stderr): info: component 'rust-std' for target 'wasm32-unknown-unknown' is up to date
+Dec 18 20:12:44.502 INFO Adding wasm-target was successful.
+Dec 18 20:12:44.502 INFO Building wasm...
+Dec 18 20:12:44.502 INFO Running "cargo" "build" "--lib" "--release" "--target" "wasm32-unknown-unknown"
+Dec 18 20:12:44.532 INFO cargo build (stderr):    Compiling chip8 v0.1.0 (/home/pierre/programming/rust/hobby/chip8-rust/chip8)
+Dec 18 20:12:44.640 INFO cargo build (stderr): error: unknown attribute
+Dec 18 20:12:44.640 INFO cargo build (stderr):   --> src/lib.rs:23:16
+Dec 18 20:12:44.640 INFO cargo build (stderr):    |
+Dec 18 20:12:44.641 INFO cargo build (stderr): 23 | #[wasm_bindgen(start)]
+Dec 18 20:12:44.641 INFO cargo build (stderr):    |                ^^^^^
+Dec 18 20:12:44.641 INFO cargo build (stderr): 
+Dec 18 20:12:44.647 INFO cargo build (stderr): error: aborting due to previous error
+Dec 18 20:12:44.648 INFO cargo build (stderr): 
+Dec 18 20:12:44.652 INFO cargo build (stderr): error: Could not compile `chip8`.
+Dec 18 20:12:44.652 INFO cargo build (stderr): 
+Dec 18 20:12:44.653 INFO cargo build (stderr): To learn more, run the command again with --verbose.
+Dec 18 20:12:44.653 ERRO Compiling your crate to WebAssembly
+Dec 18 20:13:46.316 ERRO Compiling your crate to WebAssembly
+Dec 18 21:38:22.654 ERRO Compiling your crate to WebAssembly
+Dec 18 21:38:45.485 ERRO Compiling your crate to WebAssembly
+Dec 18 21:38:58.740 ERRO Compiling your crate to WebAssembly
+Dec 18 21:39:22.420 ERRO Compiling your crate to WebAssembly

@@ -15,16 +15,16 @@ pub enum RunMode {
 
 #[derive(Clone)]
 pub struct Chip {
-    I: usize,
+    pub I: usize,
     pub mem: Ram,
     V: [u8; 16],
-    PC: u16,
+    pub PC: u16,
     pub SP: u8,
-    delay_timer: u8,
-    sound_timer: u8,
+    pub delay_timer: u8,
+    pub sound_timer: u8,
     pub vid_mem: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS],
     stack: [u16; 16],
-    key: [bool; 16],
+    pub key: [bool; 16],
     draw: bool,
     mode: RunMode,
 }
@@ -47,6 +47,10 @@ impl Chip {
         }
     }
     
+    pub fn key_pressed(&mut self, key: u8) {
+        self.key[key as usize] = true;
+    }
+
     pub fn print_mem(&self, all: bool) {
         self.mem.print(all);
     }
@@ -63,7 +67,7 @@ impl Chip {
         self.vid_mem.clone()
     }
 
-    fn fetch(&mut self) -> u16 {
+    pub fn fetch(&mut self) -> u16 {
         let opcode = self.mem.read(self.PC as usize);
         self.PC += 2;
         opcode

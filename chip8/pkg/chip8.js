@@ -13,10 +13,13 @@ function getUint8Memory() {
     return cachegetUint8Memory;
 }
 
+let WASM_VECTOR_LEN = 0;
+
 function passArray8ToWasm(arg) {
     const ptr = wasm.__wbindgen_malloc(arg.length * 1);
     getUint8Memory().set(arg, ptr / 1);
-    return [ptr, arg.length];
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
 }
 /**
 * @returns {void}
@@ -37,6 +40,67 @@ export function get_mem() {
 */
 export function get_vid_mem() {
     return wasm.get_vid_mem();
+}
+
+/**
+* @param {number} arg0
+* @returns {void}
+*/
+export function key_pressed(arg0) {
+    return wasm.key_pressed(arg0);
+}
+
+let cachedTextDecoder = new TextDecoder('utf-8');
+
+function getStringFromWasm(ptr, len) {
+    return cachedTextDecoder.decode(getUint8Memory().subarray(ptr, ptr + len));
+}
+
+let cachedGlobalArgumentPtr = null;
+function globalArgumentPtr() {
+    if (cachedGlobalArgumentPtr === null) {
+        cachedGlobalArgumentPtr = wasm.__wbindgen_global_argument_ptr();
+    }
+    return cachedGlobalArgumentPtr;
+}
+
+let cachegetUint32Memory = null;
+function getUint32Memory() {
+    if (cachegetUint32Memory === null || cachegetUint32Memory.buffer !== wasm.memory.buffer) {
+        cachegetUint32Memory = new Uint32Array(wasm.memory.buffer);
+    }
+    return cachegetUint32Memory;
+}
+/**
+* @returns {string}
+*/
+export function dump_registers() {
+    const retptr = globalArgumentPtr();
+    wasm.dump_registers(retptr);
+    const mem = getUint32Memory();
+    const rustptr = mem[retptr / 4];
+    const rustlen = mem[retptr / 4 + 1];
+
+    const realRet = getStringFromWasm(rustptr, rustlen).slice();
+    wasm.__wbindgen_free(rustptr, rustlen * 1);
+    return realRet;
+
+}
+
+/**
+* @returns {string}
+*/
+export function dump_key_mem() {
+    const retptr = globalArgumentPtr();
+    wasm.dump_key_mem(retptr);
+    const mem = getUint32Memory();
+    const rustptr = mem[retptr / 4];
+    const rustlen = mem[retptr / 4 + 1];
+
+    const realRet = getStringFromWasm(rustptr, rustlen).slice();
+    wasm.__wbindgen_free(rustptr, rustlen * 1);
+    return realRet;
+
 }
 
 function freeRam(ptr) {
@@ -90,7 +154,8 @@ export class Ram {
     * @returns {void}
     */
     write_rom(arg0) {
-        const [ptr0, len0] = passArray8ToWasm(arg0);
+        const ptr0 = passArray8ToWasm(arg0);
+        const len0 = WASM_VECTOR_LEN;
         return wasm.ram_write_rom(this.ptr, ptr0, len0);
     }
     /**
@@ -108,12 +173,6 @@ export class Ram {
     write(arg0, arg1) {
         return wasm.ram_write(this.ptr, arg0, arg1);
     }
-}
-
-let cachedTextDecoder = new TextDecoder('utf-8');
-
-function getStringFromWasm(ptr, len) {
-    return cachedTextDecoder.decode(getUint8Memory().subarray(ptr, ptr + len));
 }
 
 export function __wbindgen_throw(ptr, len) {

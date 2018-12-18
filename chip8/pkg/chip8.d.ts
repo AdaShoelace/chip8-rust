@@ -6,6 +6,12 @@ export function get_mem(): number;
 
 export function get_vid_mem(): number;
 
+export function key_pressed(arg0: number): void;
+
+export function dump_registers(): string;
+
+export function dump_key_mem(): string;
+
 export class Ram {
 free(): void;
 

@@ -23,22 +23,34 @@ lazy_static! {
 
 #[wasm_bindgen(module = "../www/index")]
 extern "C" {
-    fn setMainLoop(f: &mut FnMut());
+    fn setMainLoop(f: &Closure<FnMut()>);
     fn setVideoBuffer(vid_mem: *const u8);
 }
 
 #[wasm_bindgen]
-pub fn run(rom: Uint8Array) {
+extern "C" {
+    #[wasm_bindgen(js_namespace=console)]
+    fn log(s: &str);
+}
+
+#[wasm_bindgen]
+pub struct ClosureHandle(Closure<FnMut()>);
+
+#[wasm_bindgen]
+pub fn run(rom: Uint8Array) -> ClosureHandle {
     let mut chip = Chip::new();
 
     rom.for_each(&mut |current, index, _array| {
         chip.mem.write(0x200 + index as usize, current)
     });
 
-    let mut main = || {
+    let cb = Closure::wrap(Box::new(move || {
+        log("Running!");
         chip.emulate_cycle();
         let ptr = chip.get_vid_mem_ptr();
         setVideoBuffer(ptr);
-    };
-    setMainLoop(&mut main);
+    }) as Box<FnMut()>);
+
+    setMainLoop(&cb);
+    ClosureHandle(cb)
 }

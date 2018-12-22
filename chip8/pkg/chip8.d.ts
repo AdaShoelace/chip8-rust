@@ -1,7 +1,11 @@
 /* tslint:disable */
 export enum RunMode {Legacy,SuperChip,}
-export function run(arg0: any): void;
+export function run(arg0: any): ClosureHandle;
 
+export class ClosureHandle {
+free(): void;
+
+}
 export class Ram {
 free(): void;
 

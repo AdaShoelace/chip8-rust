@@ -66,7 +66,12 @@ impl Chip {
     pub fn get_vid_mem(&self) -> [[u8; SCREEN_COLUMNS]; SCREEN_ROWS] {
         self.vid_mem.clone()
     }
-
+    pub fn get_vid_mem_ptr(&self) -> *const u8 {
+        unsafe {
+            let b = Box::new(self.vid_mem);
+            Box::into_raw(b) as *const u8
+        }
+    }
     pub fn fetch(&mut self) -> u16 {
         let opcode = self.mem.read(self.PC as usize);
         self.PC += 2;

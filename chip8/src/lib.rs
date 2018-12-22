@@ -5,13 +5,14 @@ extern crate rand;
 
 #[macro_use]
 extern crate lazy_static;
+extern crate js_sys;
 
 mod engine;
 
 use wasm_bindgen::prelude::*;
 use std::sync::Mutex;
 use engine::chip::Chip;
-use engine::utils::*;
+use js_sys::*;
 
 lazy_static! {
     static ref CHIP: Mutex<Chip> = {
@@ -20,40 +21,24 @@ lazy_static! {
     };
 }
 
-#[wasm_bindgen]
-pub fn execute_cycle() {
-    CHIP.lock().unwrap().emulate_cycle();
+#[wasm_bindgen(module = "../www/index")]
+extern "C" {
+    fn setMainLoop(f: &mut FnMut());
+    fn setVideoBuffer(vid_mem: *const u8);
 }
 
 #[wasm_bindgen]
-pub fn get_mem() -> *const [u8; 4096] {
-    CHIP.lock().unwrap().mem.get_meta_address()
-}
+pub fn run(rom: Uint8Array) {
+    let mut chip = Chip::new();
 
-#[wasm_bindgen]
-pub fn get_vid_mem() -> *const [[u8; SCREEN_COLUMNS]; SCREEN_ROWS]  {
-    &(CHIP.lock().unwrap().vid_mem)
-}
+    rom.for_each(&mut |current, index, _array| {
+        chip.mem.write(0x200 + index as usize, current)
+    });
 
-#[wasm_bindgen]
-pub fn key_pressed(key: u8) {
-    CHIP.lock().unwrap().key_pressed(key);
+    let mut main = || {
+        chip.emulate_cycle();
+        let ptr = chip.get_vid_mem_ptr();
+        setVideoBuffer(ptr);
+    };
+    setMainLoop(&mut main);
 }
-
-#[wasm_bindgen]
-pub fn dump_registers() -> String {
-    format!{"I: {}", CHIP.lock().unwrap().I}
-}
-
-#[wasm_bindgen]
-pub fn dump_key_mem() -> String {
-    let mut res = String::new(); 
-    let len = CHIP.lock().unwrap().key.len();
-    for i in 0..len {
-        if CHIP.lock().unwrap().key[i] {
-            res.push_str(&format!("{},", i));
-        }
-    }
-    res
-}
-

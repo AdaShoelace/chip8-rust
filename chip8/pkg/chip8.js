@@ -1,5 +1,6 @@
 /* tslint:disable */
 import * as wasm from './chip8_bg';
+import { setMainLoop } from '../www/index';
 
 /**
 */
@@ -21,86 +22,79 @@ function passArray8ToWasm(arg) {
     WASM_VECTOR_LEN = arg.length;
     return ptr;
 }
+
+export function __wbg_setMainLoop_784f7d3a90ae3108(arg0, arg1) {
+    let cbarg0 = function() {
+        let a = this.a;
+        this.a = 0;
+        try {
+            return this.f(a, this.b);
+
+        } finally {
+            this.a = a;
+
+        }
+
+    };
+    cbarg0.f = wasm.__wbg_function_table.get(3);
+    cbarg0.a = arg0;
+    cbarg0.b = arg1;
+    try {
+        setMainLoop(cbarg0.bind(cbarg0));
+    } finally {
+        cbarg0.a = cbarg0.b = 0;
+
+    }
+}
+
+const heap = new Array(32);
+
+heap.fill(undefined);
+
+heap.push(undefined, null, true, false);
+
+let heap_next = heap.length;
+
+function addHeapObject(obj) {
+    if (heap_next === heap.length) heap.push(heap.length + 1);
+    const idx = heap_next;
+    heap_next = heap[idx];
+
+    heap[idx] = obj;
+    return idx;
+}
 /**
+* @param {any} arg0
 * @returns {void}
 */
-export function execute_cycle() {
-    return wasm.execute_cycle();
+export function run(arg0) {
+    return wasm.run(addHeapObject(arg0));
 }
 
-/**
-* @returns {number}
-*/
-export function get_mem() {
-    return wasm.get_mem();
-}
+function getObject(idx) { return heap[idx]; }
 
-/**
-* @returns {number}
-*/
-export function get_vid_mem() {
-    return wasm.get_vid_mem();
-}
+export function __wbg_forEach_b66b0db0fe3d89ad(arg0, arg1, arg2) {
+    let cbarg1 = function(arg0, arg1, arg2) {
+        let a = this.a;
+        this.a = 0;
+        try {
+            return this.f(a, this.b, arg0, arg1, addHeapObject(arg2));
 
-/**
-* @param {number} arg0
-* @returns {void}
-*/
-export function key_pressed(arg0) {
-    return wasm.key_pressed(arg0);
-}
+        } finally {
+            this.a = a;
 
-let cachedTextDecoder = new TextDecoder('utf-8');
+        }
 
-function getStringFromWasm(ptr, len) {
-    return cachedTextDecoder.decode(getUint8Memory().subarray(ptr, ptr + len));
-}
+    };
+    cbarg1.f = wasm.__wbg_function_table.get(21);
+    cbarg1.a = arg1;
+    cbarg1.b = arg2;
+    try {
+        getObject(arg0).forEach(cbarg1.bind(cbarg1));
+    } finally {
+        cbarg1.a = cbarg1.b = 0;
 
-let cachedGlobalArgumentPtr = null;
-function globalArgumentPtr() {
-    if (cachedGlobalArgumentPtr === null) {
-        cachedGlobalArgumentPtr = wasm.__wbindgen_global_argument_ptr();
     }
-    return cachedGlobalArgumentPtr;
-}
-
-let cachegetUint32Memory = null;
-function getUint32Memory() {
-    if (cachegetUint32Memory === null || cachegetUint32Memory.buffer !== wasm.memory.buffer) {
-        cachegetUint32Memory = new Uint32Array(wasm.memory.buffer);
-    }
-    return cachegetUint32Memory;
-}
-/**
-* @returns {string}
-*/
-export function dump_registers() {
-    const retptr = globalArgumentPtr();
-    wasm.dump_registers(retptr);
-    const mem = getUint32Memory();
-    const rustptr = mem[retptr / 4];
-    const rustlen = mem[retptr / 4 + 1];
-
-    const realRet = getStringFromWasm(rustptr, rustlen).slice();
-    wasm.__wbindgen_free(rustptr, rustlen * 1);
-    return realRet;
-
-}
-
-/**
-* @returns {string}
-*/
-export function dump_key_mem() {
-    const retptr = globalArgumentPtr();
-    wasm.dump_key_mem(retptr);
-    const mem = getUint32Memory();
-    const rustptr = mem[retptr / 4];
-    const rustlen = mem[retptr / 4 + 1];
-
-    const realRet = getStringFromWasm(rustptr, rustlen).slice();
-    wasm.__wbindgen_free(rustptr, rustlen * 1);
-    return realRet;
-
 }
 
 function freeRam(ptr) {
@@ -173,6 +167,20 @@ export class Ram {
     write(arg0, arg1) {
         return wasm.ram_write(this.ptr, arg0, arg1);
     }
+}
+
+function dropObject(idx) {
+    if (idx < 36) return;
+    heap[idx] = heap_next;
+    heap_next = idx;
+}
+
+export function __wbindgen_object_drop_ref(i) { dropObject(i); }
+
+let cachedTextDecoder = new TextDecoder('utf-8');
+
+function getStringFromWasm(ptr, len) {
+    return cachedTextDecoder.decode(getUint8Memory().subarray(ptr, ptr + len));
 }
 
 export function __wbindgen_throw(ptr, len) {

@@ -25,6 +25,8 @@ lazy_static! {
 extern "C" {
     fn setMainLoop(f: &Closure<FnMut()>);
     fn setVideoBuffer(vid_mem: *const u8);
+    fn init();
+    fn animate();
 }
 
 #[wasm_bindgen]
@@ -44,11 +46,13 @@ pub fn run(rom: Uint8Array) -> ClosureHandle {
         chip.mem.write(0x200 + index as usize, current)
     });
 
+    init();
     let cb = Closure::wrap(Box::new(move || {
         log("Running!");
         chip.emulate_cycle();
         let ptr = chip.get_vid_mem_ptr();
         setVideoBuffer(ptr);
+        animate();
     }) as Box<FnMut()>);
 
     setMainLoop(&cb);

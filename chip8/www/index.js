@@ -46,8 +46,8 @@ export function init() {
 	light.position.set( 0, 1, 1 ).normalize();
 	scene.add(light);
 
-	const hCount = COLUMNS;
-    const vCount = ROWS;
+	const hCount = ROWS;
+    const vCount = COLUMNS;
     const size = .6;
 	const spacing = 1;
 
@@ -55,11 +55,12 @@ export function init() {
 	for (let h=0; h<hCount; h+=1) {
 		for (let v=0; v<vCount; v+=1) {
 			let box = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), material);
-			box.position.x = (h-hCount/2) * spacing;
-			box.position.y = (v-vCount/2) * spacing;
+			box.position.x = (v-vCount/2) * spacing;
+			box.position.y = (h-hCount/2) * spacing;
 			grid.add(box);
 		}
 	}	
+	grid.rotateX(Math.PI);
 	scene.add(grid);
 
 	renderer = new THREE.WebGLRenderer( { antialias: true } );

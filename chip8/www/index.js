@@ -73,6 +73,7 @@ testMatrix[1 * ROWS - 2] = 0;
 
 export function animate() {
 	requestAnimationFrame( animate );
+	if(!vBuffer) return;
 	let index = 0;
 	for (let i = 0; i < COLUMNS; i++) {
 		for (let j = 0; j < ROWS; j++) {
@@ -85,6 +86,7 @@ export function animate() {
 		}
 	}
 	renderer.render( scene, camera );
+	window.main();
 } 
 function loadRom() {
 	console.log("Loading rom...");
@@ -95,6 +97,7 @@ function loadRom() {
 		window.cb = wasm.run(new Uint8Array(evt.target.result));
 	}
 	reader.readAsArrayBuffer(selectedFIle);
+	animate();
 }
 
 
@@ -114,8 +117,6 @@ export function setMainLoop(mainLoop) {
 
 export function setVideoBuffer(buffer) {
 	vBuffer = new Uint8Array(memory.buffer, buffer, COLUMNS*ROWS);
-	// printBuffer(vBuffer);
-	console.log('Buffer: ', vBuffer);
 }
 
 

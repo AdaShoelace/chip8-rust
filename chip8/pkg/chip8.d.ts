@@ -2,6 +2,10 @@
 export enum RunMode {Legacy,SuperChip,}
 export function run(arg0: any): ClosureHandle;
 
+export class ClosureHandle {
+free(): void;
+
+}
 export class Ram {
 free(): void;
 
@@ -18,9 +22,5 @@ static  new(): Ram;
  read(arg0: number): number;
 
  write(arg0: number, arg1: number): void;
-
-}
-export class ClosureHandle {
-free(): void;
 
 }

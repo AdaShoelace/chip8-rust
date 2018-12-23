@@ -77,7 +77,7 @@ export function __wbg_forEach_b66b0db0fe3d89ad(arg0, arg1, arg2) {
         }
 
     };
-    cbarg1.f = wasm.__wbg_function_table.get(20);
+    cbarg1.f = wasm.__wbg_function_table.get(24);
     cbarg1.a = arg1;
     cbarg1.b = arg2;
     try {
@@ -86,6 +86,29 @@ export function __wbg_forEach_b66b0db0fe3d89ad(arg0, arg1, arg2) {
         cbarg1.a = cbarg1.b = 0;
 
     }
+}
+
+function freeClosureHandle(ptr) {
+
+    wasm.__wbg_closurehandle_free(ptr);
+}
+/**
+*/
+export class ClosureHandle {
+
+    static __wrap(ptr) {
+        const obj = Object.create(ClosureHandle.prototype);
+        obj.ptr = ptr;
+
+        return obj;
+    }
+
+    free() {
+        const ptr = this.ptr;
+        this.ptr = 0;
+        freeClosureHandle(ptr);
+    }
+
 }
 
 function freeRam(ptr) {
@@ -158,29 +181,6 @@ export class Ram {
     write(arg0, arg1) {
         return wasm.ram_write(this.ptr, arg0, arg1);
     }
-}
-
-function freeClosureHandle(ptr) {
-
-    wasm.__wbg_closurehandle_free(ptr);
-}
-/**
-*/
-export class ClosureHandle {
-
-    static __wrap(ptr) {
-        const obj = Object.create(ClosureHandle.prototype);
-        obj.ptr = ptr;
-
-        return obj;
-    }
-
-    free() {
-        const ptr = this.ptr;
-        this.ptr = 0;
-        freeClosureHandle(ptr);
-    }
-
 }
 
 function dropObject(idx) {

@@ -12,11 +12,12 @@ const THREE = require('./lib/three.min');
 const ROM_OFFSET = 0x200;
 const ROWS = 32;
 const COLUMNS = 64;
+const KEY_BUF_LEN = 16;
 
 var camera, scene, renderer, grid;
 var geometry, material, mesh;
-var meshArray = []
 var vBuffer = null;
+var keyBuffer = null;
 
 const printBuffer = (buffer) => {
 	let printOut = '';
@@ -43,7 +44,7 @@ export function init() {
 
 
 	var light = new THREE.DirectionalLight( 0xf000f0 );
-	light.position.set( 0, 1, 1 ).normalize();
+	light.position.set( -0.5, 0.5, 1 ).normalize();
 	scene.add(light);
 
 	const hCount = ROWS;
@@ -69,9 +70,6 @@ export function init() {
 	document.body.appendChild( renderer.domElement );
 }
 
-const testMatrix = new Array(COLUMNS*ROWS).fill(1);
-testMatrix[1 * ROWS - 2] = 0;
-
 export function animate() {
 	requestAnimationFrame( animate );
 	if(!vBuffer) return;
@@ -87,6 +85,7 @@ export function animate() {
 		}
 	}
 	renderer.render( scene, camera );
+	console.log(keyBuffer);
 	window.main();
 } 
 function loadRom() {
@@ -98,9 +97,10 @@ function loadRom() {
 		window.cb = wasm.run(new Uint8Array(evt.target.result));
 	}
 	reader.readAsArrayBuffer(selectedFIle);
+
+	document.addEventListener('keypress', keyCallBack);
 	animate();
 }
-
 
 window.loadRom = loadRom;
 
@@ -120,4 +120,66 @@ export function setVideoBuffer(buffer) {
 	vBuffer = new Uint8Array(memory.buffer, buffer, COLUMNS*ROWS);
 }
 
+export function setKeyBuffer(buffer) {
+	keyBuffer = new Uint8Array(memory.buffer, buffer, KEY_BUF_LEN);
+}
 
+
+function keyCallBack(e) {
+		let key = 0; 
+      switch (e.keyCode) {
+		case 88: //X
+			key = 0x0;
+			break;
+		case 49: //1
+			key = 0x1;
+			break;
+		case 50: //2
+			key = 0x02;
+			break;
+		case 51: //3
+			key = 0x03;
+			break;
+		case 81: 
+			key = 0x4
+			break;
+		case 87: //W
+			key = 0x5;
+			break;
+		case 69: //E
+			key = 0x6;
+			break;
+		case 65: //A
+			key = 0x7;
+			break;
+		case 83: //S
+			key = 0x8;
+			break;
+		case 68: //D
+			key = 0x9;
+			break;
+		case 90: //Z
+			key = 0xa;
+			break;
+		case 67: //C
+			key = 0xb;
+			break;
+		case 52: //4
+			key = 0x0c;
+			break;
+		case 82: //R
+			key = 0xd;
+			break;
+		case 70: //F
+			key = 0xe;
+			break;
+		case 86: //V
+			key = 0xf;
+			break;
+        default:j
+          return;
+	}
+	if (key > -1 && key < 17) {
+		keyBuffer[key] = 1;
+	}
+}

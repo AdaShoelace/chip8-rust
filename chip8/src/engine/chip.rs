@@ -24,7 +24,8 @@ pub struct Chip {
     pub sound_timer: u8,
     pub vid_mem: [[u8; SCREEN_COLUMNS]; SCREEN_ROWS],
     stack: [u16; 16],
-    pub key: [bool; 16],
+    //pub key: [bool; 16],
+    pub key: [u8; 16],
     draw: bool,
     mode: RunMode,
 }
@@ -41,14 +42,16 @@ impl Chip {
             sound_timer: 0,
             vid_mem: [[0; SCREEN_COLUMNS]; SCREEN_ROWS],
             stack: [0; 16],
-            key: [false; 16],
+            //key: [false; 16],
+            key: [0; 16],
             draw: false,
             mode: RunMode::SuperChip
         }
     }
     
     pub fn key_pressed(&mut self, key: u8) {
-        self.key[key as usize] = true;
+        //self.key[key as usize] = true;
+        self.key[key as usize] = 1;
     }
 
     pub fn print_mem(&self, all: bool) {
@@ -66,10 +69,17 @@ impl Chip {
     pub fn get_vid_mem(&self) -> [[u8; SCREEN_COLUMNS]; SCREEN_ROWS] {
         self.vid_mem.clone()
     }
+
     pub fn get_vid_mem_ptr(&self) -> *const u8 {
         let b = Box::new(self.vid_mem);
         Box::into_raw(b) as *const u8
     }
+
+    pub fn get_key_mem_ptr(&mut self) -> *mut u8 {
+        let b = Box::new(self.key);
+        Box::into_raw(b) as *mut u8
+    }
+
     pub fn fetch(&mut self) -> u16 {
         let opcode = self.mem.read(self.PC as usize);
         self.PC += 2;
@@ -280,13 +290,15 @@ impl Chip {
     }
 
     fn decode_EX9E(&mut self, opcode: u16) {
-        if self.key[self.V[get_X(opcode) as usize] as usize] == true {
+        //if self.key[self.V[get_X(opcode) as usize] as usize] == true {
+        if self.key[self.V[get_X(opcode) as usize] as usize] == 1 {
             self.PC += 2;
         }
     }
 
     fn decode_EXA1(&mut self, opcode: u16) {
-        if self.key[self.V[get_X(opcode) as usize] as usize] == false {
+        //if self.key[self.V[get_X(opcode) as usize] as usize] == false {
+        if self.key[self.V[get_X(opcode) as usize] as usize] != 1 {
             self.PC += 2;
         }
     }
@@ -299,7 +311,8 @@ impl Chip {
         let mut pressed = false;
 
         for i in 0..self.key.len() {
-            if self.key[i] == true {
+            //if self.key[i] == true {
+            if self.key[i] == 1 {
                 &mut self.write_to_reg(get_X(opcode) as u8, i as u8);
                 pressed = true;
             }

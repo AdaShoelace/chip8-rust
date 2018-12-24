@@ -80,6 +80,12 @@ impl Chip {
         Box::into_raw(b) as *mut u8
     }
 
+    pub fn clear_keys(&mut self) {
+        for index in 0..self.key.len() {
+            self.key[index] = 0;
+        }
+    }
+
     pub fn fetch(&mut self) -> u16 {
         let opcode = self.mem.read(self.PC as usize);
         self.PC += 2;

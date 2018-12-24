@@ -77,7 +77,7 @@ export function __wbg_forEach_b66b0db0fe3d89ad(arg0, arg1, arg2) {
         }
 
     };
-    cbarg1.f = wasm.__wbg_function_table.get(20);
+    cbarg1.f = wasm.__wbg_function_table.get(21);
     cbarg1.a = arg1;
     cbarg1.b = arg2;
     try {
@@ -201,9 +201,9 @@ export function __wbindgen_cb_drop(i) {
     return 0;
 }
 
-export function __wbindgen_closure_wrapper22(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(4);
-    const d = wasm.__wbg_function_table.get(5);
+export function __wbindgen_closure_wrapper38(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(11);
+    const d = wasm.__wbg_function_table.get(12);
     const cb = function() {
         this.cnt++;
         let a = this.a;

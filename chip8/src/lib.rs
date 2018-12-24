@@ -25,7 +25,8 @@ lazy_static! {
 extern "C" {
     fn setMainLoop(f: &Closure<FnMut()>);
     fn setVideoBuffer(vid_mem: *const u8);
-    fn setKeyBuffer(keys: *mut u8);
+    fn getKeyPtr(keys: *mut u8);
+    fn getKeys() -> u16;
     fn init();
 }
 
@@ -51,6 +52,10 @@ pub fn run(rom: Uint8Array) -> ClosureHandle {
     let cb = Closure::wrap(Box::new(move || {
         log("Running!");
         chip.emulate_cycle();
+        chip.clear_keys();
+        if getKeys() < 17 {
+            chip.key[getKeys() as usize] = 1;
+        }
         if chip.delay_timer > 0 {
             chip.delay_timer -= 1;
         }
@@ -58,6 +63,7 @@ pub fn run(rom: Uint8Array) -> ClosureHandle {
             chip.sound_timer -= 1;
         }
 
+        log(&format!("W: {}", chip.key[0x5]));
 
         /*chip.key[0x0] = keys[0x0]; //Key::X
         chip.key[0x1] = keys[0x1]; //Key::Num1
@@ -81,6 +87,7 @@ pub fn run(rom: Uint8Array) -> ClosureHandle {
 
         let vid_ptr = chip.get_vid_mem_ptr();
         setVideoBuffer(vid_ptr);
+        getKeyPtr(chip.get_key_mem_ptr());
     }) as Box<FnMut()>);
 
     setMainLoop(&cb);

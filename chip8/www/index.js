@@ -14,10 +14,15 @@ const ROWS = 32;
 const COLUMNS = 64;
 const KEY_BUF_LEN = 16;
 
-var camera, scene, renderer, grid;
-var geometry, material, mesh;
+var camera, scene, renderer, grid, sceneBox, sceneBoxMaterial;
+var geometry, material, mesh, sceneBoxMesh;
 var vBuffer = null;
 var keyBuffer = null;
+var key;
+
+export function getKeys() {
+	return key;
+}
 
 const printBuffer = (buffer) => {
 	let printOut = '';
@@ -35,7 +40,6 @@ export function init() {
 	camera.position.z = 15;
 
 	scene = new THREE.Scene();
-
 	geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
 	material = new THREE.MeshPhongMaterial({ color: 0x40DBDB });
 	
@@ -49,15 +53,15 @@ export function init() {
 
 	const hCount = ROWS;
     const vCount = COLUMNS;
-    const size = .6;
-	const spacing = 1;
+    const size = 1.01;
+	// const spacing = 1;
 
 	grid = new THREE.Object3D(); // just to hold them all together
 	for (let h=0; h<hCount; h+=1) {
 		for (let v=0; v<vCount; v+=1) {
 			let box = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), material);
-			box.position.x = (v-vCount/2) * spacing;
-			box.position.y = (h-hCount/2) * spacing;
+			box.position.x = (v-vCount/2); //* spacing;
+			box.position.y = (h-hCount/2); //* spacing;
 			grid.add(box);
 		}
 	}	
@@ -66,8 +70,10 @@ export function init() {
 
 	renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setSize( window.innerWidth - 10, window.innerHeight - 10);
-	// let controls = new ORB.OrbitControls(camera, renderer.domElement);
+	renderer.setClearColor( 0x0d0d0d, 1);
+	// let controls = new ORB.OrbitControls(camera, renderer.domElement)
 	document.body.appendChild( renderer.domElement );
+	//document.addEventListener('keyup', keyCallBackUp);
 }
 
 export function animate() {
@@ -86,7 +92,9 @@ export function animate() {
 	}
 	renderer.render( scene, camera );
 	console.log(keyBuffer);
+	document.addEventListener('keyup', keyCallBackDown);
 	window.main();
+	key = 200;
 } 
 function loadRom() {
 	console.log("Loading rom...");
@@ -97,8 +105,6 @@ function loadRom() {
 		window.cb = wasm.run(new Uint8Array(evt.target.result));
 	}
 	reader.readAsArrayBuffer(selectedFIle);
-
-	document.addEventListener('keypress', keyCallBack);
 	animate();
 }
 
@@ -120,13 +126,19 @@ export function setVideoBuffer(buffer) {
 	vBuffer = new Uint8Array(memory.buffer, buffer, COLUMNS*ROWS);
 }
 
-export function setKeyBuffer(buffer) {
-	keyBuffer = new Uint8Array(memory.buffer, buffer, KEY_BUF_LEN);
+export function getKeyPtr(ptr) {
+	keyBuffer = new Uint8Array(memory.buffer, ptr, KEY_BUF_LEN);
+}
+
+function clearKeys() {
+	for(let i = 0; i < keyBuffer.byteLength; i++) {
+		keyBuffer[i] = 0;
+	}
 }
 
 
-function keyCallBack(e) {
-		let key = 0; 
+function keyCallBackDown(e) {
+		//let key = 0; 
       switch (e.keyCode) {
 		case 88: //X
 			key = 0x0;
@@ -176,10 +188,73 @@ function keyCallBack(e) {
 		case 86: //V
 			key = 0xf;
 			break;
-        default:j
+		default:
+		console.log('No press')
           return;
 	}
 	if (key > -1 && key < 17) {
-		keyBuffer[key] = 1;
+		// keyBuffer[key] = 1;
 	}
+	e.preventDefault();
+}
+
+function keyCallBackUp(e) {
+		// let key = 0; 
+      switch (e.keyCode) {
+		case 88: //X
+			key = 0x0;
+			break;
+		case 49: //1
+			key = 0x1;
+			break;
+		case 50: //2
+			key = 0x02;
+			break;
+		case 51: //3
+			key = 0x03;
+			break;
+		case 81: 
+			key = 0x4
+			break;
+		case 87: //W
+			key = 0x5;
+			break;
+		case 69: //E
+			key = 0x6;
+			break;
+		case 65: //A
+			key = 0x7;
+			break;
+		case 83: //S
+			key = 0x8;
+			break;
+		case 68: //D
+			key = 0x9;
+			break;
+		case 90: //Z
+			key = 0xa;
+			break;
+		case 67: //C
+			key = 0xb;
+			break;
+		case 52: //4
+			key = 0x0c;
+			break;
+		case 82: //R
+			key = 0xd;
+			break;
+		case 70: //F
+			key = 0xe;
+			break;
+		case 86: //V
+			key = 0xf;
+			break;
+		default:
+		console.log('No press')
+          return;
+	}
+	if (key > -1 && key < 17) {
+		// keyBuffer[key] = 0;
+	}
+	e.preventDefault();
 }

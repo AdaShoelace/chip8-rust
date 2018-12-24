@@ -1,6 +1,7 @@
 #![feature(custom_attribute)]
 #![allow(unused_mut)]
 extern crate wasm_bindgen;
+extern crate rand;
 extern crate js_sys;
 
 mod engine;

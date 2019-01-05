@@ -7,7 +7,6 @@ extern crate js_sys;
 mod engine;
 
 use wasm_bindgen::prelude::*;
-use std::sync::Mutex;
 use engine::chip::Chip;
 use js_sys::*;
 

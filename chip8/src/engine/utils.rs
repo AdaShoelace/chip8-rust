@@ -24,6 +24,7 @@ pub fn get_Y(opcode: u16) -> u16 {
     (opcode & 0x00f0) >> 4
 }
 
+
 #[cfg(test)]
 mod tests {
 
